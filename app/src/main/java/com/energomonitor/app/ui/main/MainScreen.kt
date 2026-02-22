@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
@@ -21,6 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.energomonitor.app.domain.model.SensorData
 import com.energomonitor.app.domain.model.SensorTopic
+import org.burnoutcrew.reorderable.ReorderableItem
+import org.burnoutcrew.reorderable.detectReorderAfterLongPress
+import org.burnoutcrew.reorderable.rememberReorderableLazyListState
+import org.burnoutcrew.reorderable.reorderable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +111,13 @@ fun MainScreen(
                         }
                     }
                     is MainUiState.Success -> {
-                        DashboardContent(sensors = state.sensors, topic = selectedTab, lastUpdate = state.lastUpdate)
+                        DashboardContent(
+                            sensors = state.sensors, 
+                            topic = selectedTab, 
+                            lastUpdate = state.lastUpdate,
+                            onMove = { from, to -> viewModel.reorderSensors(from, to) },
+                            onDragEnd = { viewModel.saveCurrentOrder() }
+                        )
                     }
                 }
             }
@@ -115,11 +126,25 @@ fun MainScreen(
 }
 
 @Composable
-fun DashboardContent(sensors: List<SensorData>, topic: SensorTopic, lastUpdate: Long) {
+fun DashboardContent(
+    sensors: List<SensorData>, 
+    topic: SensorTopic, 
+    lastUpdate: Long,
+    onMove: (Int, Int) -> Unit,
+    onDragEnd: () -> Unit
+) {
     val formatter = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
     val lastUpdateText = "Last updated: ${formatter.format(java.util.Date(lastUpdate))}"
 
+    val state = rememberReorderableLazyListState(
+        onMove = { from, to -> onMove(from.index - 1, to.index - 1) }, // -1 because the first item is the header
+        canDragOver = { draggedOver, _ -> draggedOver.index > 0 }, // Prevent dragging over the header
+        onDragEnd = { _, _ -> onDragEnd() }
+    )
+
     LazyColumn(
+        state = state.listState,
+        modifier = Modifier.reorderable(state),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -131,25 +156,37 @@ fun DashboardContent(sensors: List<SensorData>, topic: SensorTopic, lastUpdate: 
                 modifier = Modifier.padding(bottom = 8.dp)
             )
         }
-        items(sensors) { sensor ->
-            SensorCard(sensor = sensor, topic = topic)
+        items(sensors, key = { it.id }) { sensor ->
+            ReorderableItem(reorderableState = state, key = sensor.id) { isDragging ->
+                SensorCard(
+                    sensor = sensor, 
+                    topic = topic, 
+                    isDragging = isDragging,
+                    modifier = Modifier.detectReorderAfterLongPress(state)
+                )
+            }
         }
     }
 }
 
 @Composable
-fun SensorCard(sensor: SensorData, topic: SensorTopic) {
+fun SensorCard(
+    sensor: SensorData, 
+    topic: SensorTopic, 
+    isDragging: Boolean = false,
+    modifier: Modifier = Modifier
+) {
     val gradientColors = when (topic) {
         SensorTopic.TEMPERATURE -> listOf(Color(0xFFFF512F), Color(0xFFDD2476))
         SensorTopic.ENERGY -> listOf(Color(0xFFF2C94C), Color(0xFFF2994A))
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(100.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 16.dp else 8.dp)
     ) {
         Box(
             modifier = Modifier
@@ -157,32 +194,44 @@ fun SensorCard(sensor: SensorData, topic: SensorTopic) {
                 .background(Brush.linearGradient(colors = gradientColors))
                 .padding(16.dp)
         ) {
-            Column(modifier = Modifier.align(Alignment.CenterStart)) {
-                Text(
-                    text = sensor.title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            
             Row(
-                modifier = Modifier.align(Alignment.CenterEnd),
-                verticalAlignment = Alignment.Bottom
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = sensor.currentValue.toString(),
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
+                // Drag handle icon
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Reorder",
+                    tint = Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(end = 12.dp)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = sensor.unit,
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 4.dp)
-                )
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = sensor.title,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                Row(
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = sensor.currentValue.toString(),
+                        color = Color.White,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = sensor.unit,
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
             }
         }
     }

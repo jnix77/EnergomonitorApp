@@ -47,10 +47,11 @@ class UserPreferences @Inject constructor(
             preferences.remove(USER_ID_KEY)
             preferences.remove(TOKEN_KEY)
             
-            // Also clear all cache on logout
+            // Also clear all cache and order on logout
             com.energomonitor.app.domain.model.SensorTopic.entries.forEach { topic ->
                 preferences.remove(stringPreferencesKey("cache_${topic.name}"))
                 preferences.remove(stringPreferencesKey("cache_time_${topic.name}"))
+                preferences.remove(stringPreferencesKey("order_${topic.name}"))
             }
         }
     }
@@ -77,6 +78,27 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences[stringPreferencesKey("cache_${topic.name}")] = jsonString
             preferences[stringPreferencesKey("cache_time_${topic.name}")] = timestamp.toString()
+        }
+    }
+
+    fun getSensorOrder(topic: com.energomonitor.app.domain.model.SensorTopic): Flow<List<String>?> =
+        context.dataStore.data.map { preferences ->
+            val jsonString = preferences[stringPreferencesKey("order_${topic.name}")]
+            if (jsonString != null) {
+                try {
+                    kotlinx.serialization.json.Json.decodeFromString<List<String>>(jsonString)
+                } catch (e: Exception) {
+                    null
+                }
+            } else {
+                null
+            }
+        }
+
+    suspend fun saveSensorOrder(topic: com.energomonitor.app.domain.model.SensorTopic, orderIds: List<String>) {
+        val jsonString = kotlinx.serialization.json.Json.encodeToString(orderIds)
+        context.dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("order_${topic.name}")] = jsonString
         }
     }
 }

@@ -51,11 +51,15 @@ class MainViewModel @Inject constructor(
                 val cachedFlow = userPreferences.getSensorCache(currentTab)
                 val cached: Pair<List<SensorData>, Long>? = cachedFlow.firstOrNull()
                 
+                // Read saved list order
+                val orderFlow = userPreferences.getSensorOrder(currentTab)
+                val savedOrder: List<String>? = orderFlow.firstOrNull()
+                
                 // Safe extraction
                 val cachedData: List<SensorData>? = cached?.first
                 val cachedTime: Long? = cached?.second
 
-                val data: List<SensorData>
+                var data: List<SensorData>
                 val lastUpdate: Long
 
                 if (!forceRefresh && cachedData != null && cachedTime != null && (currentTime - cachedTime) < CACHE_DURATION_MS) {
@@ -69,6 +73,14 @@ class MainViewModel @Inject constructor(
                     // Save to persistent cache
                     userPreferences.saveSensorCache(currentTab, data, lastUpdate)
                 }
+                
+                // Sort data by custom saved order
+                if (savedOrder != null && savedOrder.isNotEmpty()) {
+                    data = data.sortedBy { sensor -> 
+                        val index = savedOrder.indexOf(sensor.id)
+                        if (index == -1) Int.MAX_VALUE else index 
+                    }
+                }
 
                 if (data.isEmpty()) {
                     _uiState.value = MainUiState.Empty
@@ -77,6 +89,28 @@ class MainViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _uiState.value = MainUiState.Error(e.message ?: "An unknown error occurred")
+            }
+        }
+    }
+
+    fun reorderSensors(fromIndex: Int, toIndex: Int) {
+        val currentState = _uiState.value
+        if (currentState is MainUiState.Success) {
+            val currentList = currentState.sensors.toMutableList()
+            if (fromIndex in currentList.indices && toIndex in currentList.indices) {
+                currentList.apply { add(toIndex, removeAt(fromIndex)) }
+                _uiState.value = currentState.copy(sensors = currentList)
+            }
+        }
+    }
+
+    fun saveCurrentOrder() {
+        val currentState = _uiState.value
+        if (currentState is MainUiState.Success) {
+            val currentTab = _selectedTab.value
+            val currentOrder = currentState.sensors.map { it.id }
+            viewModelScope.launch {
+                userPreferences.saveSensorOrder(currentTab, currentOrder)
             }
         }
     }
