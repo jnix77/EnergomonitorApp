@@ -36,7 +36,7 @@ fun MainScreen(
             TopAppBar(
                 title = { Text("Energomonitor Dashboard", fontWeight = FontWeight.Bold) },
                 actions = {
-                    IconButton(onClick = { viewModel.fetchData() }) {
+                    IconButton(onClick = { viewModel.fetchData(forceRefresh = true) }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
                     }
                     IconButton(onClick = onNavigateToSettings) {
@@ -100,13 +100,13 @@ fun MainScreen(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = { viewModel.fetchData() }) {
+                            Button(onClick = { viewModel.fetchData(forceRefresh = true) }) {
                                 Text("Retry")
                             }
                         }
                     }
                     is MainUiState.Success -> {
-                        DashboardContent(sensors = state.sensors, topic = selectedTab)
+                        DashboardContent(sensors = state.sensors, topic = selectedTab, lastUpdate = state.lastUpdate)
                     }
                 }
             }
@@ -115,11 +115,22 @@ fun MainScreen(
 }
 
 @Composable
-fun DashboardContent(sensors: List<SensorData>, topic: SensorTopic) {
+fun DashboardContent(sensors: List<SensorData>, topic: SensorTopic, lastUpdate: Long) {
+    val formatter = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+    val lastUpdateText = "Last updated: ${formatter.format(java.util.Date(lastUpdate))}"
+
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            Text(
+                text = lastUpdateText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+        }
         items(sensors) { sensor ->
             SensorCard(sensor = sensor, topic = topic)
         }

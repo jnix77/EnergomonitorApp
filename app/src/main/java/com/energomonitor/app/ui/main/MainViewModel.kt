@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import kotlinx.coroutines.flow.firstOrNull
+
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val repository: SensorDataRepository,
@@ -25,6 +27,8 @@ class MainViewModel @Inject constructor(
     private val _selectedTab = MutableStateFlow(SensorTopic.TEMPERATURE)
     val selectedTab: StateFlow<SensorTopic> = _selectedTab.asStateFlow()
 
+    private val CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes
+
     init {
         fetchData()
     }
@@ -36,15 +40,40 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun fetchData() {
+    fun fetchData(forceRefresh: Boolean = false) {
         viewModelScope.launch {
             _uiState.value = MainUiState.Loading
             try {
-                val data = repository.fetchSensorDataForTopic(_selectedTab.value)
+                val currentTab = _selectedTab.value
+                val currentTime = System.currentTimeMillis()
+                
+                // Read from persistent cache
+                val cachedFlow = userPreferences.getSensorCache(currentTab)
+                val cached: Pair<List<SensorData>, Long>? = cachedFlow.firstOrNull()
+                
+                // Safe extraction
+                val cachedData: List<SensorData>? = cached?.first
+                val cachedTime: Long? = cached?.second
+
+                val data: List<SensorData>
+                val lastUpdate: Long
+
+                if (!forceRefresh && cachedData != null && cachedTime != null && (currentTime - cachedTime) < CACHE_DURATION_MS) {
+                    // Use persistent cached data
+                    data = cachedData
+                    lastUpdate = cachedTime
+                } else {
+                    // Fetch new data from remote
+                    data = repository.fetchSensorDataForTopic(currentTab)
+                    lastUpdate = currentTime
+                    // Save to persistent cache
+                    userPreferences.saveSensorCache(currentTab, data, lastUpdate)
+                }
+
                 if (data.isEmpty()) {
                     _uiState.value = MainUiState.Empty
                 } else {
-                    _uiState.value = MainUiState.Success(data)
+                    _uiState.value = MainUiState.Success(data, lastUpdate)
                 }
             } catch (e: Exception) {
                 _uiState.value = MainUiState.Error(e.message ?: "An unknown error occurred")
@@ -62,6 +91,6 @@ class MainViewModel @Inject constructor(
 sealed class MainUiState {
     object Loading : MainUiState()
     object Empty : MainUiState()
-    data class Success(val sensors: List<SensorData>) : MainUiState()
+    data class Success(val sensors: List<SensorData>, val lastUpdate: Long) : MainUiState()
     data class Error(val message: String) : MainUiState()
 }

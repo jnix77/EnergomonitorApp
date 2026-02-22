@@ -9,6 +9,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,11 +41,42 @@ class UserPreferences @Inject constructor(
             preferences[TOKEN_KEY] = token
         }
     }
-    
+
     suspend fun clearCredentials() {
         context.dataStore.edit { preferences ->
             preferences.remove(USER_ID_KEY)
             preferences.remove(TOKEN_KEY)
+            
+            // Also clear all cache on logout
+            com.energomonitor.app.domain.model.SensorTopic.entries.forEach { topic ->
+                preferences.remove(stringPreferencesKey("cache_${topic.name}"))
+                preferences.remove(stringPreferencesKey("cache_time_${topic.name}"))
+            }
+        }
+    }
+
+    fun getSensorCache(topic: com.energomonitor.app.domain.model.SensorTopic): Flow<Pair<List<com.energomonitor.app.domain.model.SensorData>, Long>?> = 
+        context.dataStore.data.map { preferences ->
+            val jsonString = preferences[stringPreferencesKey("cache_${topic.name}")]
+            val timestamp = preferences[stringPreferencesKey("cache_time_${topic.name}")]?.toLongOrNull()
+            
+            if (jsonString != null && timestamp != null) {
+                try {
+                    val data = kotlinx.serialization.json.Json.decodeFromString<List<com.energomonitor.app.domain.model.SensorData>>(jsonString)
+                    Pair(data, timestamp)
+                } catch (e: Exception) {
+                    null
+                }
+            } else {
+                null
+            }
+        }
+
+    suspend fun saveSensorCache(topic: com.energomonitor.app.domain.model.SensorTopic, data: List<com.energomonitor.app.domain.model.SensorData>, timestamp: Long) {
+        val jsonString = kotlinx.serialization.json.Json.encodeToString(data)
+        context.dataStore.edit { preferences ->
+            preferences[stringPreferencesKey("cache_${topic.name}")] = jsonString
+            preferences[stringPreferencesKey("cache_time_${topic.name}")] = timestamp.toString()
         }
     }
 }
