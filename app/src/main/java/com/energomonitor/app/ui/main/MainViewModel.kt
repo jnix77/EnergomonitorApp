@@ -22,15 +22,25 @@ class MainViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<MainUiState>(MainUiState.Loading)
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
+    private val _selectedTab = MutableStateFlow(SensorTopic.TEMPERATURE)
+    val selectedTab: StateFlow<SensorTopic> = _selectedTab.asStateFlow()
+
     init {
         fetchData()
+    }
+
+    fun selectTab(topic: SensorTopic) {
+        if (_selectedTab.value != topic) {
+            _selectedTab.value = topic
+            fetchData()
+        }
     }
 
     fun fetchData() {
         viewModelScope.launch {
             _uiState.value = MainUiState.Loading
             try {
-                val data = repository.fetchAndGroupSensorData()
+                val data = repository.fetchSensorDataForTopic(_selectedTab.value)
                 if (data.isEmpty()) {
                     _uiState.value = MainUiState.Empty
                 } else {
@@ -52,6 +62,6 @@ class MainViewModel @Inject constructor(
 sealed class MainUiState {
     object Loading : MainUiState()
     object Empty : MainUiState()
-    data class Success(val groupedData: Map<SensorTopic, List<SensorData>>) : MainUiState()
+    data class Success(val sensors: List<SensorData>) : MainUiState()
     data class Error(val message: String) : MainUiState()
 }

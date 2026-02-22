@@ -29,6 +29,7 @@ fun MainScreen(
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val selectedTab by viewModel.selectedTab.collectAsState()
 
     Scaffold(
         topBar = {
@@ -49,41 +50,64 @@ fun MainScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            when (val state = uiState) {
-                is MainUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                }
-                is MainUiState.Empty -> {
-                    Text(
-                        "No data available.",
-                        modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge
+            val tabs = SensorTopic.entries.toList()
+            val selectedTabIndex = tabs.indexOf(selectedTab)
+
+            TabRow(
+                selectedTabIndex = selectedTabIndex,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            ) {
+                tabs.forEachIndexed { index, topic ->
+                    Tab(
+                        selected = selectedTabIndex == index,
+                        onClick = { viewModel.selectTab(topic) },
+                        text = { Text(topic.displayName) }
                     )
                 }
-                is MainUiState.Error -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center).padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
+                when (val state = uiState) {
+                    is MainUiState.Loading -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    }
+                    is MainUiState.Empty -> {
                         Text(
-                            text = "Error: ${state.message}",
-                            color = MaterialTheme.colorScheme.error,
+                            "No data available.",
+                            modifier = Modifier.align(Alignment.Center),
                             style = MaterialTheme.typography.bodyLarge
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.fetchData() }) {
-                            Text("Retry")
+                    }
+                    is MainUiState.Error -> {
+                        Column(
+                            modifier = Modifier.align(Alignment.Center).padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Error: ${state.message}",
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { viewModel.fetchData() }) {
+                                Text("Retry")
+                            }
                         }
                     }
-                }
-                is MainUiState.Success -> {
-                    DashboardContent(groupedData = state.groupedData)
+                    is MainUiState.Success -> {
+                        DashboardContent(sensors = state.sensors, topic = selectedTab)
+                    }
                 }
             }
         }
@@ -91,30 +115,13 @@ fun MainScreen(
 }
 
 @Composable
-fun DashboardContent(groupedData: Map<SensorTopic, List<SensorData>>) {
+fun DashboardContent(sensors: List<SensorData>, topic: SensorTopic) {
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(groupedData.entries.toList()) { (topic, sensors) ->
-            TopicSection(topic = topic, sensors = sensors)
-        }
-    }
-}
-
-@Composable
-fun TopicSection(topic: SensorTopic, sensors: List<SensorData>) {
-    Column {
-        Text(
-            text = topic.displayName,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        
-        sensors.forEach { sensor ->
+        items(sensors) { sensor ->
             SensorCard(sensor = sensor, topic = topic)
-            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }
@@ -123,11 +130,7 @@ fun TopicSection(topic: SensorTopic, sensors: List<SensorData>) {
 fun SensorCard(sensor: SensorData, topic: SensorTopic) {
     val gradientColors = when (topic) {
         SensorTopic.TEMPERATURE -> listOf(Color(0xFFFF512F), Color(0xFFDD2476))
-        SensorTopic.HUMIDITY -> listOf(Color(0xFF00B4DB), Color(0xFF0083B0))
-        SensorTopic.ELECTRICITY -> listOf(Color(0xFFF2C94C), Color(0xFFF2994A))
-        SensorTopic.WATER -> listOf(Color(0xFF4CB8C4), Color(0xFF3CD3AD))
-        SensorTopic.GAS -> listOf(Color(0xFF1D976C), Color(0xFF93F9B9))
-        SensorTopic.UNKNOWN -> listOf(Color(0xFF616161), Color(0xFF9bc5c3))
+        SensorTopic.ENERGY -> listOf(Color(0xFFF2C94C), Color(0xFFF2994A))
     }
 
     Card(

@@ -10,11 +10,7 @@ data class SensorData(
 
 enum class SensorTopic(val displayName: String) {
     TEMPERATURE("Temperature"),
-    HUMIDITY("Humidity"),
-    ELECTRICITY("Electricity"),
-    WATER("Water Consumption"),
-    GAS("Gas Consumption"),
-    UNKNOWN("Other Sensors")
+    ENERGY("Energy")
 }
 
 data class GroupedSensorData(
