@@ -9,6 +9,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Thermostat
+import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.energomonitor.app.domain.model.SensorData
 import com.energomonitor.app.domain.model.SensorTopic
+import com.energomonitor.app.ui.theme.*
 import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
@@ -38,8 +42,8 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Energomonitor Dashboard", fontWeight = FontWeight.Bold) },
+            CenterAlignedTopAppBar(
+                title = { Text("Energomonitor", fontWeight = FontWeight.Black) },
                 actions = {
                     IconButton(onClick = { viewModel.fetchData(forceRefresh = true) }) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Refresh")
@@ -49,8 +53,8 @@ fun MainScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = Color.Transparent,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -66,14 +70,21 @@ fun MainScreen(
 
             TabRow(
                 selectedTabIndex = selectedTabIndex,
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.primary,
+                divider = {} // Remove default underline divider
             ) {
                 tabs.forEachIndexed { index, topic ->
                     Tab(
                         selected = selectedTabIndex == index,
                         onClick = { viewModel.selectTab(topic) },
-                        text = { Text(topic.displayName) }
+                        text = { 
+                            Text(
+                                text = topic.displayName,
+                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium
+                            ) 
+                        },
+                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -177,16 +188,23 @@ fun SensorCard(
     modifier: Modifier = Modifier
 ) {
     val gradientColors = when (topic) {
-        SensorTopic.TEMPERATURE -> listOf(Color(0xFFFF512F), Color(0xFFDD2476))
-        SensorTopic.ENERGY -> listOf(Color(0xFFF2C94C), Color(0xFFF2994A))
+        SensorTopic.TEMPERATURE -> listOf(TemperatureGradientStart, TemperatureGradientEnd)
+        SensorTopic.ENERGY -> listOf(EnergyGradientStart, EnergyGradientEnd)
+    }
+
+    // Attempt to parse out an icon based on title heuristic
+    val sensorIcon = when {
+        sensor.title.contains("Temp", ignoreCase = true) -> Icons.Rounded.Thermostat
+        sensor.title.contains("Water", ignoreCase = true) -> Icons.Rounded.WaterDrop
+        else -> Icons.Rounded.Bolt
     }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(100.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 16.dp else 8.dp)
+            .height(110.dp),
+        shape = RoundedCornerShape(24.dp), // Premium smooth corner
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 16.dp else 4.dp)
     ) {
         Box(
             modifier = Modifier
@@ -202,9 +220,26 @@ fun SensorCard(
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Reorder",
-                    tint = Color.White.copy(alpha = 0.7f),
+                    tint = Color.White.copy(alpha = 0.5f),
                     modifier = Modifier.padding(end = 12.dp)
                 )
+                
+                // Sensor Context Icon
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = sensorIcon,
+                        contentDescription = "Sensor Type",
+                        tint = Color.White,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -222,14 +257,14 @@ fun SensorCard(
                         text = sensor.currentValue.toString(),
                         color = Color.White,
                         style = MaterialTheme.typography.headlineLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Black
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = sensor.unit,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        modifier = Modifier.padding(bottom = 6.dp)
                     )
                 }
             }
