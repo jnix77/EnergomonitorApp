@@ -25,30 +25,35 @@ class SettingsViewModel @Inject constructor(
 
     private fun loadCredentials() {
         viewModelScope.launch {
-            val userId = userPreferences.userId.first() ?: ""
+            val username = userPreferences.username.first() ?: ""
+            val hasPassword = !userPreferences.password.first().isNullOrBlank()
             val token = userPreferences.token.first() ?: ""
+            
             _uiState.value = _uiState.value.copy(
-                userId = userId,
-                token = token,
-                isLoggedIn = userId.isNotBlank() && token.isNotBlank()
+                username = username,
+                // Don't prefill password for security/UI reasons, but we check if we have one
+                hasStoredPassword = hasPassword,
+                isLoggedIn = token.isNotBlank() && hasPassword
             )
         }
     }
 
-    fun onUserIdChanged(newValue: String) {
-        _uiState.value = _uiState.value.copy(userId = newValue)
+    fun onUsernameChanged(newValue: String) {
+        _uiState.value = _uiState.value.copy(username = newValue)
     }
 
-    fun onTokenChanged(newValue: String) {
-        _uiState.value = _uiState.value.copy(token = newValue)
+    fun onPasswordChanged(newValue: String) {
+        _uiState.value = _uiState.value.copy(passwordInput = newValue)
     }
 
     fun saveCredentials() {
         val currentState = _uiState.value
         viewModelScope.launch {
-            if (currentState.userId.isNotBlank() && currentState.token.isNotBlank()) {
-                userPreferences.saveCredentials(currentState.userId, currentState.token)
-                _uiState.value = currentState.copy(isLoggedIn = true, saveSuccess = true)
+            if (currentState.username.isNotBlank() && currentState.passwordInput.isNotBlank()) {
+                userPreferences.saveCredentials(currentState.username, currentState.passwordInput)
+                // We clear the old token so the interceptor gets a new one on next request
+                userPreferences.saveAuthData("", "", "")
+                _uiState.value = currentState.copy(isLoggedIn = true, saveSuccess = true, hasStoredPassword = true)
             }
         }
     }
@@ -56,11 +61,19 @@ class SettingsViewModel @Inject constructor(
     fun resetSaveSuccess() {
         _uiState.value = _uiState.value.copy(saveSuccess = false)
     }
+
+    fun logout() {
+        viewModelScope.launch {
+            userPreferences.clearCredentials()
+            _uiState.value = SettingsUiState()
+        }
+    }
 }
 
 data class SettingsUiState(
-    val userId: String = "",
-    val token: String = "",
+    val username: String = "",
+    val passwordInput: String = "",
+    val hasStoredPassword: Boolean = false,
     val isLoggedIn: Boolean = false,
     val saveSuccess: Boolean = false
 )

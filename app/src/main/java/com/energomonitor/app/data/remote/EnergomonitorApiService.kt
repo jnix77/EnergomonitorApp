@@ -2,10 +2,19 @@ package com.energomonitor.app.data.remote
 
 import kotlinx.serialization.Serializable
 import retrofit2.http.GET
+import retrofit2.http.POST
+import retrofit2.http.Header
+import retrofit2.http.Body
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface EnergomonitorApiService {
+
+    @POST("authorizations")
+    suspend fun createAuthorization(
+        @Header("Authorization") basicAuthHeader: String,
+        @Body request: AuthorizationRequest = AuthorizationRequest()
+    ): AuthorizationResponse
 
     @GET("users/{user_id}/feeds")
     suspend fun getFeeds(@Path("user_id") userId: String): List<FeedDto>
@@ -22,6 +31,29 @@ interface EnergomonitorApiService {
 }
 
 // DTOs
+
+@Serializable
+data class AuthorizationRequest(
+    val note: String = "Android Sensor Data App Token",
+    val valid_minutes: Int = 43200 // 30 days
+)
+
+@Serializable
+data class AuthorizationResource(
+    val type: String,
+    val name: String,
+    val permissions: List<String>
+)
+
+@Serializable
+data class AuthorizationResponse(
+    val id: Int,
+    val user_id: String,
+    val token: String,
+    val note: String? = null,
+    val resources: List<AuthorizationResource> = emptyList(),
+    val expires_at: String
+)
 
 @Serializable
 data class FeedDto(

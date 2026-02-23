@@ -21,31 +21,43 @@ class UserPreferences @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        val USER_ID_KEY = stringPreferencesKey("user_id")
+        val USER_ID_KEY = stringPreferencesKey("user_id") // Still needed for Energomonitor data API calls
+        val USERNAME_KEY = stringPreferencesKey("username")
+        val PASSWORD_KEY = stringPreferencesKey("password")
         val TOKEN_KEY = stringPreferencesKey("token")
+        val TOKEN_EXPIRES_KEY = stringPreferencesKey("token_expires_at")
     }
 
-    val userId: Flow<String?> = context.dataStore.data
-        .map { preferences ->
-            preferences[USER_ID_KEY]
-        }
+    val userId: Flow<String?> = context.dataStore.data.map { it[USER_ID_KEY] }
+    val username: Flow<String?> = context.dataStore.data.map { it[USERNAME_KEY] }
+    val password: Flow<String?> = context.dataStore.data.map { CryptoUtils.decrypt(it[PASSWORD_KEY]) }
+    val token: Flow<String?> = context.dataStore.data.map { it[TOKEN_KEY] }
+    val tokenExpiresAt: Flow<String?> = context.dataStore.data.map { it[TOKEN_EXPIRES_KEY] }
 
-    val token: Flow<String?> = context.dataStore.data
-        .map { preferences ->
-            preferences[TOKEN_KEY]
-        }
-
-    suspend fun saveCredentials(userId: String, token: String) {
+    suspend fun saveAuthData(userId: String, token: String, expiresAt: String) {
         context.dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = userId
             preferences[TOKEN_KEY] = token
+            preferences[TOKEN_EXPIRES_KEY] = expiresAt
+        }
+    }
+
+    suspend fun saveCredentials(username: String, passwordRaw: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USERNAME_KEY] = username
+            if (passwordRaw.isNotBlank()) {
+                preferences[PASSWORD_KEY] = CryptoUtils.encrypt(passwordRaw)
+            }
         }
     }
 
     suspend fun clearCredentials() {
         context.dataStore.edit { preferences ->
             preferences.remove(USER_ID_KEY)
+            preferences.remove(USERNAME_KEY)
+            preferences.remove(PASSWORD_KEY)
             preferences.remove(TOKEN_KEY)
+            preferences.remove(TOKEN_EXPIRES_KEY)
             
             // Also clear all cache and order on logout
             com.energomonitor.app.domain.model.SensorTopic.entries.forEach { topic ->

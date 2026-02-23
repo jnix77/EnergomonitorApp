@@ -46,9 +46,9 @@ fun SettingsScreen(
             )
 
             OutlinedTextField(
-                value = uiState.userId,
-                onValueChange = { viewModel.onUserIdChanged(it) },
-                label = { Text("User ID") },
+                value = uiState.username,
+                onValueChange = { viewModel.onUsernameChanged(it) },
+                label = { Text("Username (Email)") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp),
@@ -56,9 +56,9 @@ fun SettingsScreen(
             )
 
             OutlinedTextField(
-                value = uiState.token,
-                onValueChange = { viewModel.onTokenChanged(it) },
-                label = { Text("API Token") },
+                value = uiState.passwordInput,
+                onValueChange = { viewModel.onPasswordChanged(it) },
+                label = { Text(if (uiState.hasStoredPassword) "Password (Leave empty to keep saved)" else "Password") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 32.dp),
@@ -69,9 +69,20 @@ fun SettingsScreen(
             Button(
                 onClick = { viewModel.saveCredentials() },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
-                enabled = uiState.userId.isNotBlank() && uiState.token.isNotBlank()
+                enabled = uiState.username.isNotBlank() && uiState.passwordInput.isNotBlank()
             ) {
                 Text("Save & Connect")
+            }
+
+            if (uiState.hasStoredPassword) {
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedButton(
+                    onClick = { viewModel.logout() },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Log Out")
+                }
             }
         }
     }

@@ -25,15 +25,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthInterceptor(userPreferences: UserPreferences): Interceptor {
-        return Interceptor { chain ->
-            val token = runBlocking { userPreferences.token.first() }
-            val requestBuilder = chain.request().newBuilder()
-            if (!token.isNullOrBlank()) {
-                requestBuilder.addHeader("Authorization", "Bearer $token")
-            }
-            chain.proceed(requestBuilder.build())
-        }
+    fun provideAuthInterceptor(authInterceptor: AuthInterceptor): Interceptor {
+        return authInterceptor
     }
 
     @Provides
