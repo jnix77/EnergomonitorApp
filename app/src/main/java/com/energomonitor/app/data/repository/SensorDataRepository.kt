@@ -28,9 +28,27 @@ class SensorDataRepository @Inject constructor(
                 val title = config?.title ?: stream.id
                 val unit = config?.unit ?: ""
                 
+                // Filter out sensors with specific units
+                if (unit == "#" || unit.equals("CZK", ignoreCase = true) ||
+                    unit.equals("Wh", ignoreCase = true)) continue
+                
+                val medium = config?.medium ?: ""
+                
                 // Only process streams that match the requested topic
-                val topic = determineTopic(title, unit)
+                val topic = determineTopic(title, unit, medium)
                 if (topic != targetTopic) continue
+
+                // Additional filtering by topic and unit
+                if (topic == SensorTopic.WATER) {
+                    if (unit.equals("m3", ignoreCase = true) || unit.equals("m³", ignoreCase = true)) {
+                        continue
+                    }
+                }
+                if (topic == SensorTopic.GAS) {
+                    if (unit.equals("Wh", ignoreCase = true)) {
+                        continue
+                    }
+                }
 
                 // 3. For each matching stream, fetch the latest data point
                 try {
@@ -38,16 +56,24 @@ class SensorDataRepository @Inject constructor(
                     if (dataPoints.isNotEmpty() && dataPoints.first().size == 2) {
                         val timestamp = (dataPoints.first()[0] as Number).toLong()
                         val value = (dataPoints.first()[1] as Number).toDouble()
+                        var finalValue = value
+                        var finalUnit = unit
+
+                        // Convert W > 1000 to kW
+                        if (unit.equals("W", ignoreCase = true) && value >= 1000) {
+                            finalValue = value / 1000.0
+                            finalUnit = "kW"
+                        }
                         
                         // Round value to 2 decimal places
-                        val roundedValue = Math.round(value * 100.0) / 100.0
+                        val roundedValue = Math.round(finalValue * 100.0) / 100.0
 
                         allSensors.add(
                             SensorData(
                                 id = stream.id,
                                 title = title,
                                 currentValue = roundedValue,
-                                unit = unit,
+                                unit = finalUnit,
                                 timestamp = timestamp
                             )
                         )
@@ -62,13 +88,39 @@ class SensorDataRepository @Inject constructor(
         return allSensors
     }
 
-    private fun determineTopic(title: String, unit: String): SensorTopic? {
+    private fun determineTopic(title: String, unit: String, medium: String): SensorTopic? {
         val lowerTitle = title.lowercase()
         val lowerUnit = unit.lowercase()
+        val lowerMedium = medium.lowercase()
 
+        // 1. Direct Medium Mapping (Prioritized if medium field is present)
+        if (lowerMedium.contains("gas")) return SensorTopic.GAS
+        if (lowerMedium.contains("water")) return SensorTopic.WATER
+        if (lowerMedium.contains("co2") || lowerMedium.contains("carbon")) return SensorTopic.CO2
+        if (lowerMedium.contains("temperature")) return SensorTopic.TEMPERATURE
+        if (lowerMedium.contains("humidity")) return SensorTopic.HUMIDITY
+        
+        // Handling Electricity/Power medium logic and splitting by Unit
+        if (lowerMedium.contains("electricity") || lowerMedium.contains("power")) {
+            return if (lowerUnit.contains("wh")) {
+                SensorTopic.ENERGY // e.g. kWh, Wh
+            } else if (lowerUnit.contains("w") && !lowerUnit.contains("wh")) {
+                SensorTopic.DEVICES // kW, W
+            } else {
+                SensorTopic.ENERGY // Fallback
+            }
+        }
+
+        // 2. Fallbacks based on unit and title heuristics (Legacy behavior)
         return when {
             lowerUnit.contains("°c") || lowerUnit.contains("celsius") || lowerTitle.contains("temp") -> SensorTopic.TEMPERATURE
-            lowerUnit.contains("w") || lowerTitle.contains("electric") || lowerTitle.contains("power") || lowerTitle.contains("gas") -> SensorTopic.ENERGY
+            lowerUnit.contains("wh") -> SensorTopic.ENERGY 
+            lowerUnit.contains("w") -> SensorTopic.DEVICES 
+            lowerTitle.contains("gas") -> SensorTopic.GAS
+            lowerTitle.contains("water") -> SensorTopic.WATER
+            lowerTitle.contains("co2") || lowerTitle.contains("carbon") -> SensorTopic.CO2
+            lowerTitle.contains("electric") || lowerTitle.contains("power") -> SensorTopic.ENERGY
+            lowerUnit.contains("%") || lowerTitle.contains("humid") -> SensorTopic.HUMIDITY
             else -> null
         }
     }

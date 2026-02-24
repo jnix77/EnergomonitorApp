@@ -48,3 +48,18 @@ val TemperatureGradientEnd = Color(0xFFF09819)
 
 val EnergyGradientStart = Color(0xFF3494E6)
 val EnergyGradientEnd = Color(0xFFEC6EAD)
+
+val DevicesGradientStart = Color(0xFF1B5E20)
+val DevicesGradientEnd = Color(0xFF388E3C)
+
+val GasGradientStart = Color(0xFF8E2DE2)
+val GasGradientEnd = Color(0xFF4A00E0)
+
+val WaterGradientStart = Color(0xFF005C97)
+val WaterGradientEnd = Color(0xFF363795)
+
+val Co2GradientStart = Color(0xFF9D50BB)
+val Co2GradientEnd = Color(0xFF6E48AA)
+
+val HumidityGradientStart = Color(0xFF00695C)
+val HumidityGradientEnd = Color(0xFF004D40)

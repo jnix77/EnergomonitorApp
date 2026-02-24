@@ -12,6 +12,11 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Thermostat
 import androidx.compose.material.icons.rounded.WaterDrop
+import androidx.compose.material.icons.rounded.InvertColors
+import androidx.compose.material.icons.rounded.LocalGasStation
+import androidx.compose.material.icons.rounded.Co2
+import androidx.compose.material.icons.rounded.ElectricMeter
+import androidx.compose.material.icons.rounded.ElectricalServices
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,6 +35,19 @@ import org.burnoutcrew.reorderable.ReorderableItem
 import org.burnoutcrew.reorderable.detectReorderAfterLongPress
 import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
+
+import androidx.compose.ui.graphics.vector.ImageVector
+
+val SensorTopic.icon: ImageVector
+    get() = when (this) {
+        SensorTopic.TEMPERATURE -> Icons.Rounded.Thermostat
+        SensorTopic.ENERGY -> Icons.Rounded.ElectricMeter
+        SensorTopic.DEVICES -> Icons.Rounded.ElectricalServices
+        SensorTopic.GAS -> Icons.Rounded.LocalGasStation
+        SensorTopic.WATER -> Icons.Rounded.WaterDrop
+        SensorTopic.HUMIDITY -> Icons.Rounded.InvertColors
+        SensorTopic.CO2 -> Icons.Rounded.Co2
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,8 +83,8 @@ fun MainScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            val tabs = SensorTopic.entries.toList()
-            val selectedTabIndex = tabs.indexOf(selectedTab)
+            val tabs = SensorTopic.entries.filter { it != SensorTopic.ENERGY }
+            val selectedTabIndex = Math.max(0, tabs.indexOf(selectedTab))
 
             TabRow(
                 selectedTabIndex = selectedTabIndex,
@@ -78,10 +96,10 @@ fun MainScreen(
                     Tab(
                         selected = selectedTabIndex == index,
                         onClick = { viewModel.selectTab(topic) },
-                        text = { 
-                            Text(
-                                text = topic.displayName,
-                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium
+                        icon = { 
+                            Icon(
+                                imageVector = topic.icon, 
+                                contentDescription = topic.displayName
                             ) 
                         },
                         unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -190,13 +208,11 @@ fun SensorCard(
     val gradientColors = when (topic) {
         SensorTopic.TEMPERATURE -> listOf(TemperatureGradientStart, TemperatureGradientEnd)
         SensorTopic.ENERGY -> listOf(EnergyGradientStart, EnergyGradientEnd)
-    }
-
-    // Attempt to parse out an icon based on title heuristic
-    val sensorIcon = when {
-        sensor.title.contains("Temp", ignoreCase = true) -> Icons.Rounded.Thermostat
-        sensor.title.contains("Water", ignoreCase = true) -> Icons.Rounded.WaterDrop
-        else -> Icons.Rounded.Bolt
+        SensorTopic.DEVICES -> listOf(DevicesGradientStart, DevicesGradientEnd)
+        SensorTopic.GAS -> listOf(GasGradientStart, GasGradientEnd)
+        SensorTopic.WATER -> listOf(WaterGradientStart, WaterGradientEnd)
+        SensorTopic.HUMIDITY -> listOf(HumidityGradientStart, HumidityGradientEnd)
+        SensorTopic.CO2 -> listOf(Co2GradientStart, Co2GradientEnd)
     }
 
     Card(
@@ -232,7 +248,7 @@ fun SensorCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = sensorIcon,
+                        imageVector = topic.icon,
                         contentDescription = "Sensor Type",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
