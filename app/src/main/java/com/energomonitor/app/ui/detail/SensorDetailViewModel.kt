@@ -1,4 +1,4 @@
-package com.energomonitor.app.ui.humidity
+package com.energomonitor.app.ui.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
-enum class HumidityTimelineRange(val displayName: String, val ms: Long) {
+enum class SensorTimelineRange(val displayName: String, val ms: Long) {
     LAST_24_HOURS("24h", 24L * 60 * 60 * 1000),
     LAST_48_HOURS("48h", 48L * 60 * 60 * 1000),
     LAST_7_DAYS("7d", 7L * 24 * 60 * 60 * 1000),
@@ -19,22 +19,22 @@ enum class HumidityTimelineRange(val displayName: String, val ms: Long) {
     LAST_30_DAYS("30d", 30L * 24 * 60 * 60 * 1000)
 }
 
-sealed class HumidityDetailUiState {
-    object Loading : HumidityDetailUiState()
-    data class Success(val dataPoints: List<Pair<Long, Double>>) : HumidityDetailUiState()
-    data class Error(val message: String) : HumidityDetailUiState()
+sealed class SensorDetailUiState {
+    object Loading : SensorDetailUiState()
+    data class Success(val dataPoints: List<Pair<Long, Double>>) : SensorDetailUiState()
+    data class Error(val message: String) : SensorDetailUiState()
 }
 
 @HiltViewModel
-class HumidityDetailViewModel @Inject constructor(
+class SensorDetailViewModel @Inject constructor(
     private val repository: SensorDataRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<HumidityDetailUiState>(HumidityDetailUiState.Loading)
-    val uiState: StateFlow<HumidityDetailUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<SensorDetailUiState>(SensorDetailUiState.Loading)
+    val uiState: StateFlow<SensorDetailUiState> = _uiState.asStateFlow()
 
-    private val _selectedRange = MutableStateFlow(HumidityTimelineRange.LAST_48_HOURS)
-    val selectedRange: StateFlow<HumidityTimelineRange> = _selectedRange.asStateFlow()
+    private val _selectedRange = MutableStateFlow(SensorTimelineRange.LAST_48_HOURS)
+    val selectedRange: StateFlow<SensorTimelineRange> = _selectedRange.asStateFlow()
 
     private var currentFeedId: String = ""
     private var currentStreamId: String = ""
@@ -46,7 +46,7 @@ class HumidityDetailViewModel @Inject constructor(
         fetchData()
     }
 
-    fun selectRange(range: HumidityTimelineRange) {
+    fun selectRange(range: SensorTimelineRange) {
         if (_selectedRange.value != range) {
             _selectedRange.value = range
             fetchData()
@@ -57,16 +57,16 @@ class HumidityDetailViewModel @Inject constructor(
         if (currentFeedId.isEmpty() || currentStreamId.isEmpty()) return
 
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.value = HumidityDetailUiState.Loading
+            _uiState.value = SensorDetailUiState.Loading
             try {
                 val rangeMs = _selectedRange.value.ms
                 val data = repository.fetchHistoricalData(currentFeedId, currentStreamId, rangeMs)
                 
                 val sortedData = data.sortedBy { it.first }
 
-                _uiState.value = HumidityDetailUiState.Success(sortedData)
+                _uiState.value = SensorDetailUiState.Success(sortedData)
             } catch (e: Exception) {
-                _uiState.value = HumidityDetailUiState.Error(e.message ?: "An unknown error occurred")
+                _uiState.value = SensorDetailUiState.Error(e.message ?: "An unknown error occurred")
             }
         }
     }

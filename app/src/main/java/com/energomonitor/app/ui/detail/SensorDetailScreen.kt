@@ -1,4 +1,4 @@
-package com.energomonitor.app.ui.energy
+package com.energomonitor.app.ui.detail
 
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -22,25 +21,35 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.energomonitor.app.ui.theme.EnergyGradientEnd
-import com.energomonitor.app.ui.theme.EnergyGradientStart
+import com.energomonitor.app.domain.model.SensorTopic
+import com.energomonitor.app.ui.theme.*
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EnergyDetailScreen(
+fun SensorDetailScreen(
+    topic: SensorTopic,
     feedId: String,
     streamId: String,
     title: String,
     onNavigateBack: () -> Unit,
-    viewModel: EnergyDetailViewModel = hiltViewModel()
+    viewModel: SensorDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val selectedRange by viewModel.selectedRange.collectAsState()
 
     LaunchedEffect(feedId, streamId) {
         viewModel.initialize(feedId, streamId)
+    }
+
+    val chipColor = when (topic) {
+        SensorTopic.ENERGY, SensorTopic.DEVICES -> Color(0xFF388E3C) 
+        SensorTopic.GAS -> GasGradientStart
+        SensorTopic.WATER -> WaterGradientStart
+        SensorTopic.HUMIDITY -> HumidityGradientStart
+        SensorTopic.CO2 -> Co2GradientStart
+        else -> Color.Gray
     }
 
     Scaffold(
@@ -73,14 +82,14 @@ fun EnergyDetailScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                EnergyTimelineRange.entries.forEach { range ->
+                SensorTimelineRange.entries.forEach { range ->
                     FilterChip(
                         selected = range == selectedRange,
                         onClick = { viewModel.selectRange(range) },
                         label = { Text(range.displayName) },
                         modifier = Modifier.padding(horizontal = 4.dp),
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = EnergyGradientStart,
+                            selectedContainerColor = chipColor,
                             selectedLabelColor = Color.White
                         )
                     )
@@ -97,24 +106,24 @@ fun EnergyDetailScreen(
                     .padding(16.dp)
             ) {
                 when (val state = uiState) {
-                    is EnergyDetailUiState.Loading -> {
+                    is SensorDetailUiState.Loading -> {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                     }
-                    is EnergyDetailUiState.Error -> {
+                    is SensorDetailUiState.Error -> {
                         Text(
                             text = "Error: ${state.message}",
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.align(Alignment.Center)
                         )
                     }
-                    is EnergyDetailUiState.Success -> {
+                    is SensorDetailUiState.Success -> {
                         if (state.dataPoints.isEmpty()) {
                             Text(
                                 "No data available.",
                                 modifier = Modifier.align(Alignment.Center)
                             )
                         } else {
-                            EnergyChart(dataPoints = state.dataPoints, selectedRange = selectedRange)
+                            SensorChart(topic = topic, dataPoints = state.dataPoints, selectedRange = selectedRange)
                         }
                     }
                 }
@@ -124,15 +133,28 @@ fun EnergyDetailScreen(
 }
 
 @Composable
-fun EnergyChart(
+fun SensorChart(
+    topic: SensorTopic,
     dataPoints: List<Pair<Long, Double>>,
-    selectedRange: EnergyTimelineRange
+    selectedRange: SensorTimelineRange
 ) {
-    // Simple dark green for the line
-    val lineBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF2E7D32)) // Dark Green
-    
-    // Light green for the solid filling below
-    val areaBrush = androidx.compose.ui.graphics.SolidColor(Color(0xFF81C784).copy(alpha = 0.5f)) // Light Green
+    val lineBrush = when (topic) {
+        SensorTopic.ENERGY, SensorTopic.DEVICES -> androidx.compose.ui.graphics.SolidColor(Color(0xFF2E7D32)) // Dark Green
+        SensorTopic.GAS -> androidx.compose.ui.graphics.SolidColor(Color(0xFF7B1FA2)) // Deep Purple
+        SensorTopic.WATER -> androidx.compose.ui.graphics.SolidColor(Color(0xFF005C97)) // Blue
+        SensorTopic.HUMIDITY -> androidx.compose.ui.graphics.SolidColor(Color(0xFF00695C)) // Teal
+        SensorTopic.CO2 -> androidx.compose.ui.graphics.SolidColor(Color(0xFF8E24AA)) // Purple
+        else -> androidx.compose.ui.graphics.SolidColor(Color.Gray)
+    }
+
+    val areaBrush = when (topic) {
+        SensorTopic.ENERGY, SensorTopic.DEVICES -> androidx.compose.ui.graphics.SolidColor(Color(0xFF81C784).copy(alpha = 0.5f))
+        SensorTopic.GAS -> androidx.compose.ui.graphics.SolidColor(Color(0xFFCE93D8).copy(alpha = 0.5f))
+        SensorTopic.WATER -> androidx.compose.ui.graphics.SolidColor(Color(0xFF64B5F6).copy(alpha = 0.5f))
+        SensorTopic.HUMIDITY -> androidx.compose.ui.graphics.SolidColor(Color(0xFF4DB6AC).copy(alpha = 0.5f))
+        SensorTopic.CO2 -> androidx.compose.ui.graphics.SolidColor(Color(0xFFE1BEE7).copy(alpha = 0.5f))
+        else -> androidx.compose.ui.graphics.SolidColor(Color.LightGray.copy(alpha = 0.5f))
+    }
 
     // We expect timestamps in seconds, so multiply by 1000 for standard format
     val minTimestamp = dataPoints.minOfOrNull { it.first } ?: 0L
@@ -141,7 +163,7 @@ fun EnergyChart(
     val minValue = dataPoints.minOfOrNull { it.second } ?: 0.0
     val maxValue = dataPoints.maxOfOrNull { it.second } ?: 100.0
 
-    // Prevent rounding completely to 1 unless step is tiny, as energy could be floating
+    // Prevent rounding completely to 1 unless step is tiny, as value could be floating
     val minY = kotlin.math.floor(minValue).toInt()
     val maxY = kotlin.math.ceil(maxValue).toInt()
     val yRange = kotlin.math.max(1, maxY - minY)
@@ -160,12 +182,12 @@ fun EnergyChart(
     
     val yStep = kotlin.math.max(1, (niceStepMultiplier * magnitude).toInt())
 
-    val paddedMin = ((minY / yStep) - 1).coerceAtLeast(0) * yStep.toDouble() // usually energy isn't negative, coerce at 0
+    val paddedMin = ((minY / yStep) - 1).coerceAtLeast(0) * yStep.toDouble() // coerce at 0
     val paddedMax = ((maxY / yStep) + 1) * yStep.toDouble()
 
     val timeFormat = remember(selectedRange) {
         when (selectedRange) {
-            EnergyTimelineRange.LAST_24_HOURS, EnergyTimelineRange.LAST_48_HOURS -> SimpleDateFormat("HH:mm", Locale.getDefault())
+            SensorTimelineRange.LAST_24_HOURS, SensorTimelineRange.LAST_48_HOURS -> SimpleDateFormat("HH:mm", Locale.getDefault())
             else -> SimpleDateFormat("MMM dd", Locale.getDefault())
         }
     }
@@ -231,15 +253,15 @@ fun EnergyChart(
 
             // Draw X-axis grid lines depending on selected range
             val stepSeconds = when (selectedRange) {
-                EnergyTimelineRange.LAST_24_HOURS -> 2 * 3600L
-                EnergyTimelineRange.LAST_48_HOURS -> 4 * 3600L
-                EnergyTimelineRange.LAST_7_DAYS -> 24 * 3600L
-                EnergyTimelineRange.LAST_15_DAYS -> 3 * 24 * 3600L
-                EnergyTimelineRange.LAST_30_DAYS -> 5 * 24 * 3600L
+                SensorTimelineRange.LAST_24_HOURS -> 2 * 3600L
+                SensorTimelineRange.LAST_48_HOURS -> 4 * 3600L
+                SensorTimelineRange.LAST_7_DAYS -> 24 * 3600L
+                SensorTimelineRange.LAST_15_DAYS -> 3 * 24 * 3600L
+                SensorTimelineRange.LAST_30_DAYS -> 5 * 24 * 3600L
             }
             
             val calendar = Calendar.getInstance().apply { timeInMillis = minTimestamp * 1000L }
-            if (selectedRange == EnergyTimelineRange.LAST_24_HOURS || selectedRange == EnergyTimelineRange.LAST_48_HOURS) {
+            if (selectedRange == SensorTimelineRange.LAST_24_HOURS || selectedRange == SensorTimelineRange.LAST_48_HOURS) {
                 calendar.set(Calendar.MINUTE, 0)
                 calendar.set(Calendar.SECOND, 0)
                 calendar.add(Calendar.HOUR_OF_DAY, 1)

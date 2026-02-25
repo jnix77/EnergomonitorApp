@@ -56,11 +56,7 @@ val SensorTopic.icon: ImageVector
 fun MainScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToTemperatureDetail: (String, String, String) -> Unit,
-    onNavigateToEnergyDetail: (String, String, String) -> Unit,
-    onNavigateToGasDetail: (String, String, String) -> Unit,
-    onNavigateToWaterDetail: (String, String, String) -> Unit,
-    onNavigateToHumidityDetail: (String, String, String) -> Unit,
-    onNavigateToCo2Detail: (String, String, String) -> Unit,
+    onNavigateToSensorDetail: (SensorTopic, String, String, String) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -155,11 +151,7 @@ fun MainScreen(
                             onMove = { from, to -> viewModel.reorderSensors(from, to) },
                             onDragEnd = { viewModel.saveCurrentOrder() },
                             onNavigateToTemperatureDetail = onNavigateToTemperatureDetail,
-                            onNavigateToEnergyDetail = onNavigateToEnergyDetail,
-                            onNavigateToGasDetail = onNavigateToGasDetail,
-                            onNavigateToWaterDetail = onNavigateToWaterDetail,
-                            onNavigateToHumidityDetail = onNavigateToHumidityDetail,
-                            onNavigateToCo2Detail = onNavigateToCo2Detail
+                            onNavigateToSensorDetail = onNavigateToSensorDetail
                         )
                     }
                 }
@@ -176,11 +168,7 @@ fun DashboardContent(
     onMove: (Int, Int) -> Unit,
     onDragEnd: () -> Unit,
     onNavigateToTemperatureDetail: (String, String, String) -> Unit,
-    onNavigateToEnergyDetail: (String, String, String) -> Unit,
-    onNavigateToGasDetail: (String, String, String) -> Unit,
-    onNavigateToWaterDetail: (String, String, String) -> Unit,
-    onNavigateToHumidityDetail: (String, String, String) -> Unit,
-    onNavigateToCo2Detail: (String, String, String) -> Unit
+    onNavigateToSensorDetail: (SensorTopic, String, String, String) -> Unit
 ) {
     val formatter = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
     val lastUpdateText = "Last updated: ${formatter.format(java.util.Date(lastUpdate))}"
@@ -228,16 +216,8 @@ fun DashboardContent(
                     onClick = {
                         if (topic == SensorTopic.TEMPERATURE) {
                             onNavigateToTemperatureDetail(sensor.feedId, sensor.id, sensor.title)
-                        } else if (topic == SensorTopic.ENERGY || topic == SensorTopic.DEVICES) {
-                            onNavigateToEnergyDetail(sensor.feedId, sensor.id, sensor.title)
-                        } else if (topic == SensorTopic.GAS) {
-                            onNavigateToGasDetail(sensor.feedId, sensor.id, sensor.title)
-                        } else if (topic == SensorTopic.WATER) {
-                            onNavigateToWaterDetail(sensor.feedId, sensor.id, sensor.title)
-                        } else if (topic == SensorTopic.HUMIDITY) {
-                            onNavigateToHumidityDetail(sensor.feedId, sensor.id, sensor.title)
-                        } else if (topic == SensorTopic.CO2) {
-                            onNavigateToCo2Detail(sensor.feedId, sensor.id, sensor.title)
+                        } else {
+                            onNavigateToSensorDetail(topic, sensor.feedId, sensor.id, sensor.title)
                         }
                     },
                     modifier = Modifier.detectReorderAfterLongPress(state)
