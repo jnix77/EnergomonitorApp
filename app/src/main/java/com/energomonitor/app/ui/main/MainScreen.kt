@@ -60,6 +60,7 @@ fun MainScreen(
     onNavigateToGasDetail: (String, String, String) -> Unit,
     onNavigateToWaterDetail: (String, String, String) -> Unit,
     onNavigateToHumidityDetail: (String, String, String) -> Unit,
+    onNavigateToCo2Detail: (String, String, String) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -157,7 +158,8 @@ fun MainScreen(
                             onNavigateToEnergyDetail = onNavigateToEnergyDetail,
                             onNavigateToGasDetail = onNavigateToGasDetail,
                             onNavigateToWaterDetail = onNavigateToWaterDetail,
-                            onNavigateToHumidityDetail = onNavigateToHumidityDetail
+                            onNavigateToHumidityDetail = onNavigateToHumidityDetail,
+                            onNavigateToCo2Detail = onNavigateToCo2Detail
                         )
                     }
                 }
@@ -177,7 +179,8 @@ fun DashboardContent(
     onNavigateToEnergyDetail: (String, String, String) -> Unit,
     onNavigateToGasDetail: (String, String, String) -> Unit,
     onNavigateToWaterDetail: (String, String, String) -> Unit,
-    onNavigateToHumidityDetail: (String, String, String) -> Unit
+    onNavigateToHumidityDetail: (String, String, String) -> Unit,
+    onNavigateToCo2Detail: (String, String, String) -> Unit
 ) {
     val formatter = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
     val lastUpdateText = "Last updated: ${formatter.format(java.util.Date(lastUpdate))}"
@@ -233,6 +236,8 @@ fun DashboardContent(
                             onNavigateToWaterDetail(sensor.feedId, sensor.id, sensor.title)
                         } else if (topic == SensorTopic.HUMIDITY) {
                             onNavigateToHumidityDetail(sensor.feedId, sensor.id, sensor.title)
+                        } else if (topic == SensorTopic.CO2) {
+                            onNavigateToCo2Detail(sensor.feedId, sensor.id, sensor.title)
                         }
                     },
                     modifier = Modifier.detectReorderAfterLongPress(state)
