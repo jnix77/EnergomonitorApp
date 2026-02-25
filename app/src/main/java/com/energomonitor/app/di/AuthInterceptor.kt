@@ -6,6 +6,8 @@ import com.energomonitor.app.data.remote.AuthorizationRequest
 import com.energomonitor.app.data.remote.AuthorizationResponse
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
@@ -20,6 +22,7 @@ class AuthInterceptor @Inject constructor(
 ) : Interceptor {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val mutex = Mutex()
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -33,7 +36,15 @@ class AuthInterceptor @Inject constructor(
 
         // If no token exists, try to get one synchronously
         if (token.isNullOrBlank()) {
-            token = refreshAccessToken(chain)
+            token = runBlocking {
+                mutex.withLock {
+                    var currentToken = userPreferences.token.first()
+                    if (currentToken.isNullOrBlank()) {
+                        currentToken = refreshAccessToken(chain)
+                    }
+                    currentToken
+                }
+            }
             if (token.isNullOrBlank()) {
                 // Failed to get token (e.g. wrong credentials), proceed anyway to surface 401
                 return chain.proceed(request)
@@ -45,13 +56,15 @@ class AuthInterceptor @Inject constructor(
         // If unauthorized, token might be expired
         if (response.code == 401) {
             response.close() // Close the previous body
-            synchronized(this) {
-                // Check if another thread already refreshed the token
-                val newToken = runBlocking { userPreferences.token.first() }
-                if (newToken != null && newToken != token && newToken.isNotBlank()) {
-                    token = newToken
-                } else {
-                    token = refreshAccessToken(chain)
+            token = runBlocking {
+                mutex.withLock {
+                    // Check if another thread already refreshed the token
+                    val newToken = userPreferences.token.first()
+                    if (newToken != null && newToken != token && newToken.isNotBlank()) {
+                        newToken
+                    } else {
+                        refreshAccessToken(chain)
+                    }
                 }
             }
             if (!token.isNullOrBlank()) {
@@ -85,9 +98,9 @@ class AuthInterceptor @Inject constructor(
         return chain.proceed(builder.build())
     }
 
-    private fun refreshAccessToken(chain: Interceptor.Chain): String? {
-        val username = runBlocking { userPreferences.username.first() }
-        val password = runBlocking { userPreferences.password.first() }
+    private suspend fun refreshAccessToken(chain: Interceptor.Chain): String? {
+        val username = userPreferences.username.first()
+        val password = userPreferences.password.first()
 
         if (username.isNullOrBlank() || password.isNullOrBlank()) return null
 
@@ -111,13 +124,11 @@ class AuthInterceptor @Inject constructor(
                 val responseBodyStr = response.body?.string()
                 if (responseBodyStr != null) {
                     val authResponse = json.decodeFromString<AuthorizationResponse>(responseBodyStr)
-                    runBlocking {
-                        userPreferences.saveAuthData(
-                            userId = authResponse.user_id,
-                            token = authResponse.token,
-                            expiresAt = authResponse.expires_at
-                        )
-                    }
+                    userPreferences.saveAuthData(
+                        userId = authResponse.user_id,
+                        token = authResponse.token,
+                        expiresAt = authResponse.expires_at
+                    )
                     return authResponse.token
                 }
             } else {

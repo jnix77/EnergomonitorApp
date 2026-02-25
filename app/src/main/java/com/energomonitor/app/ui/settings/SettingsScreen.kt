@@ -110,7 +110,7 @@ fun SettingsScreen(
             )
             
             Text(
-                text = "Disclaimer: This is not an official app and is provided 'as is' without warranties of any kind.",
+                text = "Disclaimer: This is not an official app and is provided \"as is\" without warranties of any kind. However, we are committed to your privacy: Aside from a basic internet connection for core functionality, the app requires zero permissions and collects no user or device data. Your privacy isn't just a feature; it's our standard.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

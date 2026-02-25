@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -172,6 +173,8 @@ fun DashboardContent(
         onDragEnd = { _, _ -> onDragEnd() }
     )
 
+    val currentTime = remember { System.currentTimeMillis() }
+
     LazyColumn(
         state = state.listState,
         modifier = Modifier.reorderable(state),
@@ -187,11 +190,23 @@ fun DashboardContent(
             )
         }
         items(sensors, key = { it.id }) { sensor ->
+            val isOutdated = remember(sensor.timestamp) { 
+                (currentTime - (sensor.timestamp * 1000)) > (2 * 60 * 60 * 1000L) 
+            }
+            val timeText = remember(sensor.timestamp) {
+                DateUtils.getRelativeTimeSpanString(
+                    sensor.timestamp * 1000,
+                    currentTime,
+                    DateUtils.MINUTE_IN_MILLIS
+                ).toString()
+            }
             ReorderableItem(reorderableState = state, key = sensor.id) { isDragging ->
                 SensorCard(
                     sensor = sensor, 
                     topic = topic, 
                     isDragging = isDragging,
+                    timeText = timeText,
+                    isOutdated = isOutdated,
                     modifier = Modifier.detectReorderAfterLongPress(state)
                 )
             }
@@ -204,10 +219,10 @@ fun SensorCard(
     sensor: SensorData, 
     topic: SensorTopic, 
     isDragging: Boolean = false,
+    timeText: String,
+    isOutdated: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val isOutdated = (System.currentTimeMillis() - (sensor.timestamp * 1000)) > (2 * 60 * 60 * 1000L)
-    
     val gradientColors = if (isOutdated) {
         listOf(Color.DarkGray, Color.DarkGray)
     } else {
@@ -271,12 +286,6 @@ fun SensorCard(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
                     )
-                    
-                    val timeText = DateUtils.getRelativeTimeSpanString(
-                        sensor.timestamp * 1000,
-                        System.currentTimeMillis(),
-                        DateUtils.MINUTE_IN_MILLIS
-                    ).toString()
                     
                     Text(
                         text = timeText,

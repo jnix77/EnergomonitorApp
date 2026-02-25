@@ -7,8 +7,11 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import javax.inject.Inject
@@ -83,13 +86,15 @@ class UserPreferences @Inject constructor(
             } else {
                 null
             }
-        }
+        }.flowOn(Dispatchers.IO)
 
     suspend fun saveSensorCache(topic: com.energomonitor.app.domain.model.SensorTopic, data: List<com.energomonitor.app.domain.model.SensorData>, timestamp: Long) {
-        val jsonString = kotlinx.serialization.json.Json.encodeToString(data)
-        context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey("cache_${topic.name}")] = jsonString
-            preferences[stringPreferencesKey("cache_time_${topic.name}")] = timestamp.toString()
+        withContext(Dispatchers.IO) {
+            val jsonString = kotlinx.serialization.json.Json.encodeToString(data)
+            context.dataStore.edit { preferences ->
+                preferences[stringPreferencesKey("cache_${topic.name}")] = jsonString
+                preferences[stringPreferencesKey("cache_time_${topic.name}")] = timestamp.toString()
+            }
         }
     }
 
@@ -105,12 +110,14 @@ class UserPreferences @Inject constructor(
             } else {
                 null
             }
-        }
+        }.flowOn(Dispatchers.IO)
 
     suspend fun saveSensorOrder(topic: com.energomonitor.app.domain.model.SensorTopic, orderIds: List<String>) {
-        val jsonString = kotlinx.serialization.json.Json.encodeToString(orderIds)
-        context.dataStore.edit { preferences ->
-            preferences[stringPreferencesKey("order_${topic.name}")] = jsonString
+        withContext(Dispatchers.IO) {
+            val jsonString = kotlinx.serialization.json.Json.encodeToString(orderIds)
+            context.dataStore.edit { preferences ->
+                preferences[stringPreferencesKey("order_${topic.name}")] = jsonString
+            }
         }
     }
 }

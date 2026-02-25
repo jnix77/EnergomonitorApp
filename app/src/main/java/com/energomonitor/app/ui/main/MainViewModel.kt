@@ -10,7 +10,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 import kotlinx.coroutines.flow.firstOrNull
@@ -41,7 +43,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun fetchData(forceRefresh: Boolean = false) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             _uiState.value = MainUiState.Loading
             try {
                 val currentTab = _selectedTab.value
@@ -109,7 +111,7 @@ class MainViewModel @Inject constructor(
         if (currentState is MainUiState.Success) {
             val currentTab = _selectedTab.value
             val currentOrder = currentState.sensors.map { it.id }
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.IO) {
                 userPreferences.saveSensorOrder(currentTab, currentOrder)
             }
         }
