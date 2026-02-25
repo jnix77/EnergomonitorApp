@@ -5,12 +5,12 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:9.0.1")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21")
     }
 }
 plugins {
     id("com.google.dagger.hilt.android") version "2.59.2" apply false
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.0" apply false
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" apply false
-    id("com.google.devtools.ksp") version "2.0.0-1.0.21" apply false
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
+    id("com.google.devtools.ksp") version "2.0.21-1.0.26" apply false
 }
