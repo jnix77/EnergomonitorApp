@@ -15,9 +15,14 @@ object Destinations {
     const val SETTINGS = "settings"
     const val DASHBOARD = "dashboard"
     const val TEMPERATURE_DETAIL = "temperature_detail/{feedId}/{streamId}/{title}"
+    const val ENERGY_DETAIL = "energy_detail/{feedId}/{streamId}/{title}"
 
     fun createTemperatureDetailRoute(feedId: String, streamId: String, title: String): String {
         return "temperature_detail/$feedId/$streamId/$title"
+    }
+
+    fun createEnergyDetailRoute(feedId: String, streamId: String, title: String): String {
+        return "energy_detail/$feedId/$streamId/$title"
     }
 }
 
@@ -52,6 +57,9 @@ fun EnergomonitorAppContent() {
                 },
                 onNavigateToTemperatureDetail = { feedId, streamId, title ->
                     navController.navigate(Destinations.createTemperatureDetailRoute(feedId, streamId, java.net.URLEncoder.encode(title, "UTF-8")))
+                },
+                onNavigateToEnergyDetail = { feedId, streamId, title ->
+                    navController.navigate(Destinations.createEnergyDetailRoute(feedId, streamId, java.net.URLEncoder.encode(title, "UTF-8")))
                 }
             )
         }
@@ -69,6 +77,26 @@ fun EnergomonitorAppContent() {
             val title = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
             
             com.energomonitor.app.ui.temperature.TemperatureDetailScreen(
+                feedId = feedId,
+                streamId = streamId,
+                title = title,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        composable(
+            route = Destinations.ENERGY_DETAIL,
+            arguments = listOf(
+                androidx.navigation.navArgument("feedId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("streamId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val feedId = backStackEntry.arguments?.getString("feedId") ?: ""
+            val streamId = backStackEntry.arguments?.getString("streamId") ?: ""
+            val title = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
+            
+            com.energomonitor.app.ui.energy.EnergyDetailScreen(
                 feedId = feedId,
                 streamId = streamId,
                 title = title,
