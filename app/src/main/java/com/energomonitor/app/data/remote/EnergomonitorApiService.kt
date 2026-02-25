@@ -26,7 +26,9 @@ interface EnergomonitorApiService {
     suspend fun getStreamData(
         @Path("feed_id") feedId: String,
         @Path("stream_id") streamId: String,
-        @Query("limit") limit: Int = 1
+        @Query("limit") limit: Int = 1,
+        @Query("time_from") timeFrom: Long? = null,
+        @Query("time_to") timeTo: Long? = null
     ): List<List<Double>>
 }
 

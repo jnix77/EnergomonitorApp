@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class SensorData(
     val id: String,
+    val feedId: String,
     val title: String,
     val currentValue: Double,
     val unit: String,

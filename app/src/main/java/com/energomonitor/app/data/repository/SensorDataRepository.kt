@@ -71,6 +71,7 @@ class SensorDataRepository @Inject constructor(
                         allSensors.add(
                             SensorData(
                                 id = stream.id,
+                                feedId = feed.id,
                                 title = title,
                                 currentValue = roundedValue,
                                 unit = finalUnit,
@@ -122,6 +123,35 @@ class SensorDataRepository @Inject constructor(
             lowerTitle.contains("electric") || lowerTitle.contains("power") -> SensorTopic.ENERGY
             lowerUnit.contains("%") || lowerTitle.contains("humid") -> SensorTopic.HUMIDITY
             else -> null
+        }
+    }
+
+    suspend fun fetchHistoricalData(feedId: String, streamId: String, rangeMs: Long): List<Pair<Long, Double>> {
+        val currentTimeInSeconds = System.currentTimeMillis() / 1000
+        val timeFromInSeconds = currentTimeInSeconds - (rangeMs / 1000)
+        
+        return try {
+            val dataPoints = apiService.getStreamData(
+                feedId = feedId, 
+                streamId = streamId, 
+                limit = 1000000, 
+                timeFrom = timeFromInSeconds
+            )
+            
+            // Downsample to max ~500 points to prevent OOM and Canvas lag
+            val maxPoints = 500
+            val step = if (dataPoints.size > maxPoints) dataPoints.size / maxPoints else 1
+            
+            dataPoints.filterIndexed { index, _ -> index % step == 0 }.mapNotNull { point ->
+                if (point.size == 2) {
+                    val timestamp = (point[0] as Number).toLong()
+                    val value = (point[1] as Number).toDouble()
+                    Pair(timestamp, value)
+                } else null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
     }
 }

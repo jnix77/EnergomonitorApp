@@ -55,6 +55,7 @@ val SensorTopic.icon: ImageVector
 @Composable
 fun MainScreen(
     onNavigateToSettings: () -> Unit,
+    onNavigateToTemperatureDetail: (String, String, String) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -147,7 +148,8 @@ fun MainScreen(
                             topic = selectedTab, 
                             lastUpdate = state.lastUpdate,
                             onMove = { from, to -> viewModel.reorderSensors(from, to) },
-                            onDragEnd = { viewModel.saveCurrentOrder() }
+                            onDragEnd = { viewModel.saveCurrentOrder() },
+                            onNavigateToTemperatureDetail = onNavigateToTemperatureDetail
                         )
                     }
                 }
@@ -162,7 +164,8 @@ fun DashboardContent(
     topic: SensorTopic, 
     lastUpdate: Long,
     onMove: (Int, Int) -> Unit,
-    onDragEnd: () -> Unit
+    onDragEnd: () -> Unit,
+    onNavigateToTemperatureDetail: (String, String, String) -> Unit
 ) {
     val formatter = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
     val lastUpdateText = "Last updated: ${formatter.format(java.util.Date(lastUpdate))}"
@@ -207,6 +210,11 @@ fun DashboardContent(
                     isDragging = isDragging,
                     timeText = timeText,
                     isOutdated = isOutdated,
+                    onClick = {
+                        if (topic == SensorTopic.TEMPERATURE) {
+                            onNavigateToTemperatureDetail(sensor.feedId, sensor.id, sensor.title)
+                        }
+                    },
                     modifier = Modifier.detectReorderAfterLongPress(state)
                 )
             }
@@ -214,6 +222,7 @@ fun DashboardContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SensorCard(
     sensor: SensorData, 
@@ -221,6 +230,7 @@ fun SensorCard(
     isDragging: Boolean = false,
     timeText: String,
     isOutdated: Boolean,
+    onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val gradientColors = if (isOutdated) {
@@ -238,6 +248,7 @@ fun SensorCard(
     }
 
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
             .height(110.dp),
