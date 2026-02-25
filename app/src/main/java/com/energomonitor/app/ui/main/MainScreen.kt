@@ -37,6 +37,7 @@ import org.burnoutcrew.reorderable.rememberReorderableLazyListState
 import org.burnoutcrew.reorderable.reorderable
 
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.text.format.DateUtils
 
 val SensorTopic.icon: ImageVector
     get() = when (this) {
@@ -205,14 +206,20 @@ fun SensorCard(
     isDragging: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val gradientColors = when (topic) {
-        SensorTopic.TEMPERATURE -> listOf(TemperatureGradientStart, TemperatureGradientEnd)
-        SensorTopic.ENERGY -> listOf(EnergyGradientStart, EnergyGradientEnd)
-        SensorTopic.DEVICES -> listOf(DevicesGradientStart, DevicesGradientEnd)
-        SensorTopic.GAS -> listOf(GasGradientStart, GasGradientEnd)
-        SensorTopic.WATER -> listOf(WaterGradientStart, WaterGradientEnd)
-        SensorTopic.HUMIDITY -> listOf(HumidityGradientStart, HumidityGradientEnd)
-        SensorTopic.CO2 -> listOf(Co2GradientStart, Co2GradientEnd)
+    val isOutdated = (System.currentTimeMillis() - (sensor.timestamp * 1000)) > (2 * 60 * 60 * 1000L)
+    
+    val gradientColors = if (isOutdated) {
+        listOf(Color.DarkGray, Color.DarkGray)
+    } else {
+        when (topic) {
+            SensorTopic.TEMPERATURE -> listOf(TemperatureGradientStart, TemperatureGradientEnd)
+            SensorTopic.ENERGY -> listOf(EnergyGradientStart, EnergyGradientEnd)
+            SensorTopic.DEVICES -> listOf(DevicesGradientStart, DevicesGradientEnd)
+            SensorTopic.GAS -> listOf(GasGradientStart, GasGradientEnd)
+            SensorTopic.WATER -> listOf(WaterGradientStart, WaterGradientEnd)
+            SensorTopic.HUMIDITY -> listOf(HumidityGradientStart, HumidityGradientEnd)
+            SensorTopic.CO2 -> listOf(Co2GradientStart, Co2GradientEnd)
+        }
     }
 
     Card(
@@ -263,6 +270,19 @@ fun SensorCard(
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Medium
+                    )
+                    
+                    val timeText = DateUtils.getRelativeTimeSpanString(
+                        sensor.timestamp * 1000,
+                        System.currentTimeMillis(),
+                        DateUtils.MINUTE_IN_MILLIS
+                    ).toString()
+                    
+                    Text(
+                        text = timeText,
+                        color = Color.White.copy(alpha = 0.7f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 2.dp)
                     )
                 }
                 
