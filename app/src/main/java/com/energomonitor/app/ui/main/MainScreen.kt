@@ -59,6 +59,7 @@ fun MainScreen(
     onNavigateToEnergyDetail: (String, String, String) -> Unit,
     onNavigateToGasDetail: (String, String, String) -> Unit,
     onNavigateToWaterDetail: (String, String, String) -> Unit,
+    onNavigateToHumidityDetail: (String, String, String) -> Unit,
     viewModel: MainViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -155,7 +156,8 @@ fun MainScreen(
                             onNavigateToTemperatureDetail = onNavigateToTemperatureDetail,
                             onNavigateToEnergyDetail = onNavigateToEnergyDetail,
                             onNavigateToGasDetail = onNavigateToGasDetail,
-                            onNavigateToWaterDetail = onNavigateToWaterDetail
+                            onNavigateToWaterDetail = onNavigateToWaterDetail,
+                            onNavigateToHumidityDetail = onNavigateToHumidityDetail
                         )
                     }
                 }
@@ -174,7 +176,8 @@ fun DashboardContent(
     onNavigateToTemperatureDetail: (String, String, String) -> Unit,
     onNavigateToEnergyDetail: (String, String, String) -> Unit,
     onNavigateToGasDetail: (String, String, String) -> Unit,
-    onNavigateToWaterDetail: (String, String, String) -> Unit
+    onNavigateToWaterDetail: (String, String, String) -> Unit,
+    onNavigateToHumidityDetail: (String, String, String) -> Unit
 ) {
     val formatter = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
     val lastUpdateText = "Last updated: ${formatter.format(java.util.Date(lastUpdate))}"
@@ -228,6 +231,8 @@ fun DashboardContent(
                             onNavigateToGasDetail(sensor.feedId, sensor.id, sensor.title)
                         } else if (topic == SensorTopic.WATER) {
                             onNavigateToWaterDetail(sensor.feedId, sensor.id, sensor.title)
+                        } else if (topic == SensorTopic.HUMIDITY) {
+                            onNavigateToHumidityDetail(sensor.feedId, sensor.id, sensor.title)
                         }
                     },
                     modifier = Modifier.detectReorderAfterLongPress(state)

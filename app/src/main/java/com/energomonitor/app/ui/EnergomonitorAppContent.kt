@@ -18,6 +18,7 @@ object Destinations {
     const val ENERGY_DETAIL = "energy_detail/{feedId}/{streamId}/{title}"
     const val GAS_DETAIL = "gas_detail/{feedId}/{streamId}/{title}"
     const val WATER_DETAIL = "water_detail/{feedId}/{streamId}/{title}"
+    const val HUMIDITY_DETAIL = "humidity_detail/{feedId}/{streamId}/{title}"
 
     fun createTemperatureDetailRoute(feedId: String, streamId: String, title: String): String {
         return "temperature_detail/$feedId/$streamId/$title"
@@ -33,6 +34,10 @@ object Destinations {
 
     fun createWaterDetailRoute(feedId: String, streamId: String, title: String): String {
         return "water_detail/$feedId/$streamId/$title"
+    }
+
+    fun createHumidityDetailRoute(feedId: String, streamId: String, title: String): String {
+        return "humidity_detail/$feedId/$streamId/$title"
     }
 }
 
@@ -76,6 +81,9 @@ fun EnergomonitorAppContent() {
                 },
                 onNavigateToWaterDetail = { feedId, streamId, title ->
                     navController.navigate(Destinations.createWaterDetailRoute(feedId, streamId, java.net.URLEncoder.encode(title, "UTF-8")))
+                },
+                onNavigateToHumidityDetail = { feedId, streamId, title ->
+                    navController.navigate(Destinations.createHumidityDetailRoute(feedId, streamId, java.net.URLEncoder.encode(title, "UTF-8")))
                 }
             )
         }
@@ -153,6 +161,26 @@ fun EnergomonitorAppContent() {
             val title = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
             
             com.energomonitor.app.ui.water.WaterDetailScreen(
+                feedId = feedId,
+                streamId = streamId,
+                title = title,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Destinations.HUMIDITY_DETAIL,
+            arguments = listOf(
+                androidx.navigation.navArgument("feedId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("streamId") { type = androidx.navigation.NavType.StringType },
+                androidx.navigation.navArgument("title") { type = androidx.navigation.NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val feedId = backStackEntry.arguments?.getString("feedId") ?: ""
+            val streamId = backStackEntry.arguments?.getString("streamId") ?: ""
+            val title = java.net.URLDecoder.decode(backStackEntry.arguments?.getString("title") ?: "", "UTF-8")
+            
+            com.energomonitor.app.ui.humidity.HumidityDetailScreen(
                 feedId = feedId,
                 streamId = streamId,
                 title = title,
