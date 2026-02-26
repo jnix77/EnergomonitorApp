@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Energomonitor</string>
+    <string name="temperature_widget_name">Temperature</string>
+    <string name="temperature_widget_description">1x2 Temperature sensor widget</string>
+    <string name="temperature_widget_description_2x1">2x1 Temperature sensor widget</string>
+    <string name="temperature_widget_description_1x1">1x1 Temperature sensor widget</string>
+    <string name="configure_temperature_widget">Configure Temperature</string>
+</resources>
