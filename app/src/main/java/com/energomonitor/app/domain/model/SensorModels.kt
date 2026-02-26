@@ -14,8 +14,7 @@ data class SensorData(
 
 enum class SensorTopic(val displayName: String) {
     TEMPERATURE("Temperature"),
-    ENERGY("Energy"),
-    DEVICES("Electricity"),
+    POWER("Power"),
     GAS("Gas"),
     WATER("Water"),
     HUMIDITY("Humidity"),

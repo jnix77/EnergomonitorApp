@@ -44,7 +44,7 @@ fun SensorDetailScreen(
     }
 
     val chipColor = when (topic) {
-        SensorTopic.ENERGY, SensorTopic.DEVICES -> Color(0xFF388E3C) 
+        SensorTopic.POWER -> Color(0xFF388E3C) 
         SensorTopic.GAS -> GasGradientStart
         SensorTopic.WATER -> WaterGradientStart
         SensorTopic.HUMIDITY -> HumidityGradientStart
@@ -139,7 +139,7 @@ fun SensorChart(
     selectedRange: SensorTimelineRange
 ) {
     val lineBrush = when (topic) {
-        SensorTopic.ENERGY, SensorTopic.DEVICES -> androidx.compose.ui.graphics.SolidColor(Color(0xFF2E7D32)) // Dark Green
+        SensorTopic.POWER -> androidx.compose.ui.graphics.SolidColor(Color(0xFF2E7D32)) // Dark Green
         SensorTopic.GAS -> androidx.compose.ui.graphics.SolidColor(Color(0xFF7B1FA2)) // Deep Purple
         SensorTopic.WATER -> androidx.compose.ui.graphics.SolidColor(Color(0xFF005C97)) // Blue
         SensorTopic.HUMIDITY -> androidx.compose.ui.graphics.SolidColor(Color(0xFF00695C)) // Teal
@@ -148,7 +148,7 @@ fun SensorChart(
     }
 
     val areaBrush = when (topic) {
-        SensorTopic.ENERGY, SensorTopic.DEVICES -> androidx.compose.ui.graphics.SolidColor(Color(0xFF81C784).copy(alpha = 0.5f))
+        SensorTopic.POWER -> androidx.compose.ui.graphics.SolidColor(Color(0xFF81C784).copy(alpha = 0.5f))
         SensorTopic.GAS -> androidx.compose.ui.graphics.SolidColor(Color(0xFFCE93D8).copy(alpha = 0.5f))
         SensorTopic.WATER -> androidx.compose.ui.graphics.SolidColor(Color(0xFF64B5F6).copy(alpha = 0.5f))
         SensorTopic.HUMIDITY -> androidx.compose.ui.graphics.SolidColor(Color(0xFF4DB6AC).copy(alpha = 0.5f))

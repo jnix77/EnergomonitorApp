@@ -43,8 +43,7 @@ import android.text.format.DateUtils
 val SensorTopic.icon: ImageVector
     get() = when (this) {
         SensorTopic.TEMPERATURE -> Icons.Rounded.Thermostat
-        SensorTopic.ENERGY -> Icons.Rounded.ElectricMeter
-        SensorTopic.DEVICES -> Icons.Rounded.ElectricalServices
+        SensorTopic.POWER -> Icons.Rounded.ElectricalServices
         SensorTopic.GAS -> Icons.Rounded.LocalGasStation
         SensorTopic.WATER -> Icons.Rounded.WaterDrop
         SensorTopic.HUMIDITY -> Icons.Rounded.InvertColors
@@ -87,7 +86,7 @@ fun MainScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            val tabs = SensorTopic.entries.filter { it != SensorTopic.ENERGY }
+            val tabs = SensorTopic.entries
             val selectedTabIndex = Math.max(0, tabs.indexOf(selectedTab))
 
             TabRow(
@@ -243,8 +242,7 @@ fun SensorCard(
     } else {
         when (topic) {
             SensorTopic.TEMPERATURE -> listOf(TemperatureGradientStart, TemperatureGradientEnd)
-            SensorTopic.ENERGY -> listOf(EnergyGradientStart, EnergyGradientEnd)
-            SensorTopic.DEVICES -> listOf(DevicesGradientStart, DevicesGradientEnd)
+            SensorTopic.POWER -> listOf(PowerGradientStart, PowerGradientEnd)
             SensorTopic.GAS -> listOf(GasGradientStart, GasGradientEnd)
             SensorTopic.WATER -> listOf(WaterGradientStart, WaterGradientEnd)
             SensorTopic.HUMIDITY -> listOf(HumidityGradientStart, HumidityGradientEnd)

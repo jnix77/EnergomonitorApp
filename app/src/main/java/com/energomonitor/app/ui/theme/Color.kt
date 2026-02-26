@@ -46,11 +46,8 @@ val OnSurfaceVariantDark = Color(0xFFCBD5E1)
 val TemperatureGradientStart = Color(0xFFFF512F)
 val TemperatureGradientEnd = Color(0xFFF09819)
 
-val EnergyGradientStart = Color(0xFF3494E6)
-val EnergyGradientEnd = Color(0xFFEC6EAD)
-
-val DevicesGradientStart = Color(0xFF1B5E20)
-val DevicesGradientEnd = Color(0xFF388E3C)
+val PowerGradientStart = Color(0xFF1B5E20)
+val PowerGradientEnd = Color(0xFF388E3C)
 
 val GasGradientStart = Color(0xFF8E2DE2)
 val GasGradientEnd = Color(0xFF4A00E0)

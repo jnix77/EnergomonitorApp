@@ -97,7 +97,7 @@ fun EnergomonitorAppContent() {
             val topic = try {
                 com.energomonitor.app.domain.model.SensorTopic.valueOf(topicString)
             } catch (e: Exception) {
-                com.energomonitor.app.domain.model.SensorTopic.ENERGY // Fallback
+                com.energomonitor.app.domain.model.SensorTopic.POWER // Fallback
             }
             val feedId = backStackEntry.arguments?.getString("feedId") ?: ""
             val streamId = backStackEntry.arguments?.getString("streamId") ?: ""

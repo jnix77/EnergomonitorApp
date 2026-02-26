@@ -29,26 +29,17 @@ class SensorDataRepository @Inject constructor(
                 val unit = config?.unit ?: ""
                 
                 // Filter out sensors with specific units
-                if (unit == "#" || unit.equals("CZK", ignoreCase = true) ||
-                    unit.equals("Wh", ignoreCase = true)) continue
+                if (unit == "#" || 
+                    unit.equals("CZK", ignoreCase = true) ||
+                    unit.equals("Wh", ignoreCase = true) ||
+                    unit.equals("m3", ignoreCase = true) || 
+                    unit.equals("m³", ignoreCase = true)) continue
                 
                 val medium = config?.medium ?: ""
                 
                 // Only process streams that match the requested topic
                 val topic = determineTopic(title, unit, medium)
                 if (topic != targetTopic) continue
-
-                // Additional filtering by topic and unit
-                if (topic == SensorTopic.WATER) {
-                    if (unit.equals("m3", ignoreCase = true) || unit.equals("m³", ignoreCase = true)) {
-                        continue
-                    }
-                }
-                if (topic == SensorTopic.GAS) {
-                    if (unit.equals("Wh", ignoreCase = true)) {
-                        continue
-                    }
-                }
 
                 // 3. For each matching stream, fetch the latest data point
                 try {
@@ -104,23 +95,23 @@ class SensorDataRepository @Inject constructor(
         // Handling Electricity/Power medium logic and splitting by Unit
         if (lowerMedium.contains("electricity") || lowerMedium.contains("power")) {
             return if (lowerUnit.contains("wh")) {
-                SensorTopic.ENERGY // e.g. kWh, Wh
+                null // mapped out from energy
             } else if (lowerUnit.contains("w") && !lowerUnit.contains("wh")) {
-                SensorTopic.DEVICES // kW, W
+                SensorTopic.POWER // kW, W
             } else {
-                SensorTopic.ENERGY // Fallback
+                SensorTopic.POWER // Fallback
             }
         }
 
         // 2. Fallbacks based on unit and title heuristics (Legacy behavior)
         return when {
             lowerUnit.contains("°c") || lowerUnit.contains("celsius") || lowerTitle.contains("temp") -> SensorTopic.TEMPERATURE
-            lowerUnit.contains("wh") -> SensorTopic.ENERGY 
-            lowerUnit.contains("w") -> SensorTopic.DEVICES 
+            lowerUnit.contains("wh") -> null 
+            lowerUnit.contains("w") -> SensorTopic.POWER 
             lowerTitle.contains("gas") -> SensorTopic.GAS
             lowerTitle.contains("water") -> SensorTopic.WATER
             lowerTitle.contains("co2") || lowerTitle.contains("carbon") -> SensorTopic.CO2
-            lowerTitle.contains("electric") || lowerTitle.contains("power") -> SensorTopic.ENERGY
+            lowerTitle.contains("electric") || lowerTitle.contains("power") -> SensorTopic.POWER
             lowerUnit.contains("%") || lowerTitle.contains("humid") -> SensorTopic.HUMIDITY
             else -> null
         }
