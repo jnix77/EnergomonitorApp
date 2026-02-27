@@ -22,3 +22,16 @@
 
 # Specific rules for Retrofit, Gson/Serialization if needed:
 # Usually handled by the libraries' consumer rules, but add here if needed.
+
+# Keep generic signatures (Crucial for Retrofit/Serialization so List<T> doesn't become Class)
+-keepattributes Signature
+
+# Keep annotations (Crucial for Retrofit @GET, @POST, etc., and @Serializable)
+-keepattributes *Annotation*
+
+# Keep API Service interface and its methods
+-keep interface com.energomonitor.app.data.remote.EnergomonitorApiService { *; }
+
+# Keep DTOs that are serialized/deserialized
+-keep class com.energomonitor.app.data.remote.**Dto { *; }
+-keep class com.energomonitor.app.data.remote.Authorization* { *; }
