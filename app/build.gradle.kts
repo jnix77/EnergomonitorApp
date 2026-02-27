@@ -14,13 +14,13 @@ android {
         applicationId = "com.energomonitor.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 77
-        versionName = "0.0.1.77"
+        versionCode = 1
+        versionName = "0.1"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
