@@ -22,3 +22,6 @@ gradle/gradle-daemon-jvm.properties
 
 # Build output logs
 build_output.log
+
+# Release App Bundles
+app/release/app-release.aab
