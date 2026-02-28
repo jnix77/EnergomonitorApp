@@ -241,7 +241,16 @@ fun SensorCard(
         listOf(Color.DarkGray, Color.DarkGray)
     } else {
         when (topic) {
-            SensorTopic.TEMPERATURE -> listOf(TemperatureGradientStart, TemperatureGradientEnd)
+            SensorTopic.TEMPERATURE -> {
+                val value = sensor.currentValue
+                when {
+                    value < 0 -> listOf(Color(0xFF0052D4), Color(0xFF4364F7)) // Freezing Blue Gradient
+                    value in 0.0..10.0 -> listOf(Color(0xFF0BA360), Color(0xFF3CBA92)) // Cool Green Gradient
+                    value > 10.0 && value <= 20.0 -> listOf(Color(0xFFF2994A), Color(0xFFF2C94C)) // Warm Yellow Gradient
+                    value > 20.0 && value <= 30.0 -> listOf(TemperatureGradientStart, TemperatureGradientEnd) // Original Orange Gradient
+                    else -> listOf(Color(0xFFED213A), Color(0xFF93291E)) // Hot Red Gradient
+                }
+            }
             SensorTopic.POWER -> listOf(PowerGradientStart, PowerGradientEnd)
             SensorTopic.GAS -> listOf(GasGradientStart, GasGradientEnd)
             SensorTopic.WATER -> listOf(WaterGradientStart, WaterGradientEnd)
