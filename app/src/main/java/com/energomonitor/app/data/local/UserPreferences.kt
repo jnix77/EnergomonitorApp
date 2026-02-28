@@ -26,31 +26,35 @@ class UserPreferences @Inject constructor(
     companion object {
         val USER_ID_KEY = stringPreferencesKey("user_id") // Still needed for Energomonitor data API calls
         val USERNAME_KEY = stringPreferencesKey("username")
-        val PASSWORD_KEY = stringPreferencesKey("password")
-        val TOKEN_KEY = stringPreferencesKey("token")
-        val TOKEN_EXPIRES_KEY = stringPreferencesKey("token_expires_at")
     }
 
     val userId: Flow<String?> = context.dataStore.data.map { it[USER_ID_KEY] }
     val username: Flow<String?> = context.dataStore.data.map { it[USERNAME_KEY] }
-    val password: Flow<String?> = context.dataStore.data.map { CryptoUtils.decrypt(it[PASSWORD_KEY]) }
-    val token: Flow<String?> = context.dataStore.data.map { it[TOKEN_KEY] }
-    val tokenExpiresAt: Flow<String?> = context.dataStore.data.map { it[TOKEN_EXPIRES_KEY] }
+
+    // Password and token are now stored in EncryptedSharedPreferences via SecureStorage
+    val password: Flow<String?> = context.dataStore.data.map { 
+        SecureStorage.getPassword(context)
+    }
+    val token: Flow<String?> = context.dataStore.data.map { 
+        SecureStorage.getToken(context)
+    }
+    val tokenExpiresAt: Flow<String?> = context.dataStore.data.map { 
+        SecureStorage.getTokenExpiresAt(context)
+    }
 
     suspend fun saveAuthData(userId: String, token: String, expiresAt: String) {
         context.dataStore.edit { preferences ->
             preferences[USER_ID_KEY] = userId
-            preferences[TOKEN_KEY] = token
-            preferences[TOKEN_EXPIRES_KEY] = expiresAt
         }
+        SecureStorage.saveToken(context, token, expiresAt)
     }
 
     suspend fun saveCredentials(username: String, passwordRaw: String) {
         context.dataStore.edit { preferences ->
             preferences[USERNAME_KEY] = username
-            if (passwordRaw.isNotBlank()) {
-                preferences[PASSWORD_KEY] = CryptoUtils.encrypt(passwordRaw)
-            }
+        }
+        if (passwordRaw.isNotBlank()) {
+            SecureStorage.savePassword(context, passwordRaw)
         }
     }
 
@@ -58,9 +62,6 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences.remove(USER_ID_KEY)
             preferences.remove(USERNAME_KEY)
-            preferences.remove(PASSWORD_KEY)
-            preferences.remove(TOKEN_KEY)
-            preferences.remove(TOKEN_EXPIRES_KEY)
             
             // Also clear all cache and order on logout
             com.energomonitor.app.domain.model.SensorTopic.entries.forEach { topic ->
@@ -69,6 +70,8 @@ class UserPreferences @Inject constructor(
                 preferences.remove(stringPreferencesKey("order_${topic.name}"))
             }
         }
+        // Clear encrypted storage
+        SecureStorage.clearAll(context)
     }
 
     fun getSensorCache(topic: com.energomonitor.app.domain.model.SensorTopic): Flow<Pair<List<com.energomonitor.app.domain.model.SensorData>, Long>?> = 

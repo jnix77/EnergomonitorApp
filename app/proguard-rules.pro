@@ -50,3 +50,11 @@
 
 # Fix for Retrofit + Kotlin Coroutines "Class cannot be cast to ParameterizedType"
 -keep,allowobfuscation,allowshrinking interface kotlin.coroutines.Continuation
+
+# EncryptedSharedPreferences / Google Tink rules
+-dontwarn com.google.errorprone.annotations.**
+-dontwarn javax.annotation.**
+-dontwarn org.conscrypt.**
+-dontwarn com.google.api.client.**
+-dontwarn org.joda.time.**
+-keep class com.google.crypto.tink.** { *; }
