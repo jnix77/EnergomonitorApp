@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.text.style.TextDecoration
 import com.energomonitor.app.BuildConfig
 import androidx.hilt.navigation.compose.hiltViewModel
 
@@ -121,7 +124,19 @@ fun SettingsScreen(
                 text = "Code licensed under MIT License.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            val uriHandler = LocalUriHandler.current
+            Text(
+                text = "https://github.com/jnix77/EnergomonitorApp",
+                style = MaterialTheme.typography.bodySmall.copy(textDecoration = TextDecoration.Underline),
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.clickable {
+                    uriHandler.openUri("https://github.com/jnix77/EnergomonitorApp")
+                }
             )
         }
     }

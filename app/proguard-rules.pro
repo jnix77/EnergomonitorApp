@@ -24,7 +24,7 @@
 # Usually handled by the libraries' consumer rules, but add here if needed.
 
 # Keep generic signatures (Crucial for Retrofit/Serialization so List<T> doesn't become Class)
--keepattributes Signature
+-keepattributes Signature, InnerClasses, EnclosingMethod
 
 # Keep annotations (Crucial for Retrofit @GET, @POST, etc., and @Serializable)
 -keepattributes *Annotation*
@@ -35,3 +35,18 @@
 # Keep DTOs that are serialized/deserialized
 -keep class com.energomonitor.app.data.remote.**Dto { *; }
 -keep class com.energomonitor.app.data.remote.Authorization* { *; }
+
+# Kotlinx Serialization Rules
+-keepattributes RuntimeVisibleAnnotations
+-keep class kotlinx.serialization.** { *; }
+-keepclassmembers class kotlinx.serialization.** { *; }
+
+# Retain serializers for generic types (List, Map, etc.)
+-keep class * implements kotlinx.serialization.KSerializer { *; }
+-keepclassmembers class * implements kotlinx.serialization.KSerializer {
+    <init>(...);
+    public static *** INSTANCE;
+}
+
+# Fix for Retrofit + Kotlin Coroutines "Class cannot be cast to ParameterizedType"
+-keep,allowobfuscation,allowshrinking interface kotlin.coroutines.Continuation
