@@ -25,6 +25,7 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Column
 import androidx.glance.layout.fillMaxSize
+import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -168,25 +169,45 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
 
     val size = LocalSize.current
     val isLandscape = size.width > size.height
-    val isSmall = size.width <= 100.dp && size.height <= 100.dp
+    // Many 1x1 widgets on 5-column grids evaluate slightly larger than 100.dp (often 110-115.dp)
+    val isSmall = size.width <= 120.dp && size.height <= 120.dp
+
+    val shortTitle = if (title.contains(" ") && title.length > 10) {
+        title.substringAfter(" ")
+    } else if (title.length > 15) {
+        ".." + title.takeLast(13)
+    } else {
+        title
+    }
 
     if (isSmall) {
-        androidx.glance.layout.Box(
+        Column(
             modifier = GlanceModifier.fillMaxSize()
                 .background(backgroundColor)
-                .padding(8.dp)
+                .padding(4.dp)
                 .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity"))),
-            contentAlignment = Alignment.Center
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text(
+                text = displayTime,
+                style = TextStyle(
+                    color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
+                    fontSize = 12.sp,
+                    textAlign = androidx.glance.text.TextAlign.Center
+                ),
+                maxLines = 1,
+            )
             Text(
                 text = if (value != null) "${value}°C" else "--",
                 style = TextStyle(
                     color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 24.sp,
+                    fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = androidx.glance.text.TextAlign.Center
                 ),
-                maxLines = 2
+                maxLines = 2,
+                modifier = GlanceModifier.padding(top = 4.dp)
             )
         }
     } else if (isLandscape) {
@@ -203,19 +224,19 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                 modifier = GlanceModifier.defaultWeight().padding(8.dp)
             ) {
                 Text(
-                    text = title,
+                    text = shortTitle,
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
-                    maxLines = 2
+                    maxLines = 3
                 )
                 Text(
                     text = displayTime,
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 14.sp,
+                        fontSize = 11.sp,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
                     maxLines = 1,
@@ -232,7 +253,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = if (value != null) "${value}°C" else "--",
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 32.sp,
+                        fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
@@ -241,40 +262,56 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
             }
         }
     } else {
+        // Fallback for 1x2 (tall) or 2x2 (large square) widgets
+        
         Column(
             modifier = GlanceModifier.fillMaxSize()
                 .background(backgroundColor)
-                .padding(8.dp)
                 .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity"))),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = title,
-                style = TextStyle(
-                    color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 16.sp,
-                    textAlign = androidx.glance.text.TextAlign.Center
+            // Upper half: Title and Time
+            Column(
+                modifier = GlanceModifier.defaultWeight().fillMaxWidth().padding(top = 8.dp, start = 4.dp, end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = shortTitle,
+                    style = TextStyle(
+                        color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
+                        fontSize = 12.sp,
+                        textAlign = androidx.glance.text.TextAlign.Center
+                    ),
+                    maxLines = 3
                 )
-            )
-            Text(
-                text = displayTime,
-                style = TextStyle(
-                    color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 14.sp,
-                    textAlign = androidx.glance.text.TextAlign.Center
+                Text(
+                    text = displayTime,
+                    style = TextStyle(
+                        color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
+                        fontSize = 11.sp,
+                        textAlign = androidx.glance.text.TextAlign.Center
+                    ),
+                    maxLines = 1,
+                    modifier = GlanceModifier.padding(top = 4.dp)
                 )
-            )
-            Text(
-                text = if (value != null) "${value}°C" else "--",
-                style = TextStyle(
-                    color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = androidx.glance.text.TextAlign.Center
-                ),
-                modifier = GlanceModifier.padding(top = 8.dp)
-            )
+            }
+            // Lower half: Sensor Value
+            Column(
+                modifier = GlanceModifier.defaultWeight().fillMaxWidth().padding(bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (value != null) "${value}°C" else "--",
+                    style = TextStyle(
+                        color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = androidx.glance.text.TextAlign.Center
+                    ),
+                    maxLines = 2
+                )
+            }
         }
     }
 }
