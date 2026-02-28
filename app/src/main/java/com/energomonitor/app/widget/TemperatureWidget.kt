@@ -59,7 +59,7 @@ class TemperatureWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val entryPoint = EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java)
-        val repository = entryPoint.sensorDataRepository()
+        // val repository = entryPoint.sensorDataRepository() // No longer used in provideGlance
         
         provideContent {
             GlanceTheme {
@@ -99,14 +99,22 @@ class TemperatureWidget : GlanceAppWidget() {
                 
                 if (feedId != null && streamId != null) {
                     try {
-                        // Fetch temperature sensors
-                        val sensors = repository.fetchSensorDataForTopic(SensorTopic.TEMPERATURE)
-                        val targetSensor = sensors.find { it.feedId == feedId && it.id == streamId }
-                        
-                        if (targetSensor != null) {
-                            prefs[titleKey] = targetSensor.title
-                            prefs[valueKey] = targetSensor.currentValue
-                            prefs[timestampKey] = targetSensor.timestamp
+                        // Directly query the API for the single stream needed.
+                        // This prevents downloading the entire topic graph every 15 minutes per widget.
+                        val dataPoints = repository.fetchHistoricalData(feedId, streamId, 1) // Just gives us latest 1 point efficiently
+                        if (dataPoints.isNotEmpty()) {
+                            val latestPoint = dataPoints.last()
+                            prefs[valueKey] = latestPoint.second
+                            prefs[timestampKey] = latestPoint.first
+                        } else {
+                           // Fallback to fetch whole topic if we need to get the title dynamically
+                           val sensors = repository.fetchSensorDataForTopic(SensorTopic.TEMPERATURE)
+                           val targetSensor = sensors.find { it.feedId == feedId && it.id == streamId }
+                           if (targetSensor != null) {
+                               prefs[titleKey] = targetSensor.title
+                               prefs[valueKey] = targetSensor.currentValue
+                               prefs[timestampKey] = targetSensor.timestamp
+                           }
                         }
                     } catch (e: Exception) {
                         e.printStackTrace()

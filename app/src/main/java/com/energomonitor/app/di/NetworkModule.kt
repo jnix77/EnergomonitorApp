@@ -17,6 +17,7 @@ import com.energomonitor.app.BuildConfig
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("unused")
 object NetworkModule {
 
     private const val BASE_URL = "https://api.energomonitor.com/v1/"

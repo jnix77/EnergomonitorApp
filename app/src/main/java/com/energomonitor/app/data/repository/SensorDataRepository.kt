@@ -5,6 +5,9 @@ import com.energomonitor.app.data.remote.EnergomonitorApiService
 import com.energomonitor.app.domain.model.SensorData
 import com.energomonitor.app.domain.model.SensorTopic
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,61 +23,77 @@ class SensorDataRepository @Inject constructor(
         val feeds = apiService.getFeeds(userId)
         val allSensors = mutableListOf<SensorData>()
 
-        // 2. Fetch Streams for each Feed
-        for (feed in feeds) {
-            val streams = apiService.getStreams(feed.id)
-            for (stream in streams) {
-                val config = stream.configs?.firstOrNull()
-                val title = config?.title ?: stream.id
-                val unit = config?.unit ?: ""
-                
-                // Filter out sensors with specific units
-                if (unit == "#" || 
-                    unit.equals("CZK", ignoreCase = true) ||
-                    unit.equals("Wh", ignoreCase = true) ||
-                    unit.equals("m3", ignoreCase = true) || 
-                    unit.equals("m³", ignoreCase = true)) continue
-                
-                val medium = config?.medium ?: ""
-                
-                // Only process streams that match the requested topic
-                val topic = determineTopic(title, unit, medium)
-                if (topic != targetTopic) continue
+        // 2. Concurrently fetch Streams for each Feed
+        coroutineScope {
+            val feedJobs = feeds.map { feed ->
+                async {
+                    val streamResult = mutableListOf<SensorData>()
+                    try {
+                        val streams = apiService.getStreams(feed.id)
+                        
+                        // 3. Concurrently fetch the latest data point for each stream
+                        val streamJobs = streams.map { stream ->
+                            async {
+                                val config = stream.configs?.firstOrNull()
+                                val title = config?.title ?: stream.id
+                                val unit = config?.unit ?: ""
+                                
+                                // Filter out sensors with specific units
+                                if (unit == "#" || 
+                                    unit.equals("CZK", ignoreCase = true) ||
+                                    unit.equals("Wh", ignoreCase = true) ||
+                                    unit.equals("m3", ignoreCase = true) || 
+                                    unit.equals("m³", ignoreCase = true)) return@async null
+                                
+                                val medium = config?.medium ?: ""
+                                
+                                // Only process streams that match the requested topic
+                                val topic = determineTopic(title, unit, medium)
+                                if (topic != targetTopic) return@async null
 
-                // 3. For each matching stream, fetch the latest data point
-                try {
-                    val dataPoints = apiService.getStreamData(feed.id, stream.id, limit = 1)
-                    if (dataPoints.isNotEmpty() && dataPoints.first().size == 2) {
-                        val timestamp = (dataPoints.first()[0] as Number).toLong()
-                        val value = (dataPoints.first()[1] as Number).toDouble()
-                        var finalValue = value
-                        var finalUnit = unit
+                                // Fetch the latest data point
+                                val dataPoints = apiService.getStreamData(feed.id, stream.id, limit = 1)
 
-                        // Convert W > 1000 to kW
-                        if (unit.equals("W", ignoreCase = true) && value >= 1000) {
-                            finalValue = value / 1000.0
-                            finalUnit = "kW"
+                                if (dataPoints.isNotEmpty() && dataPoints.first().size == 2) {
+                                    val timestamp = (dataPoints.first()[0] as Number).toLong()
+                                    val value = (dataPoints.first()[1] as Number).toDouble()
+                                    var finalValue = value
+                                    var finalUnit = unit
+
+                                    // Convert W > 1000 to kW
+                                    if (unit.equals("W", ignoreCase = true) && value >= 1000) {
+                                        finalValue = value / 1000.0
+                                        finalUnit = "kW"
+                                    }
+                                    
+                                    // Round value to 2 decimal places
+                                    val roundedValue = Math.round(finalValue * 100.0) / 100.0
+
+                                    return@async SensorData(
+                                        id = stream.id,
+                                        feedId = feed.id,
+                                        title = title,
+                                        currentValue = roundedValue,
+                                        unit = finalUnit,
+                                        timestamp = timestamp
+                                    )
+                                } else {
+                                    return@async null // Explicitly return null if dataPoints is empty or malformed
+                                }
+                            }
                         }
                         
-                        // Round value to 2 decimal places
-                        val roundedValue = Math.round(finalValue * 100.0) / 100.0
-
-                        allSensors.add(
-                            SensorData(
-                                id = stream.id,
-                                feedId = feed.id,
-                                title = title,
-                                currentValue = roundedValue,
-                                unit = finalUnit,
-                                timestamp = timestamp
-                            )
-                        )
+                        // Wait for all streams in this feed
+                        streamJobs.awaitAll().filterNotNull().forEach { streamResult.add(it) }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                } catch (e: Exception) {
-                    // Ignore individual stream errors to allow others to load
-                    e.printStackTrace()
+                    streamResult
                 }
             }
+            
+            // Wait for all feeds
+            feedJobs.awaitAll().forEach { allSensors.addAll(it) }
         }
 
         return allSensors
@@ -125,8 +144,9 @@ class SensorDataRepository @Inject constructor(
             val dataPoints = apiService.getStreamData(
                 feedId = feedId, 
                 streamId = streamId, 
-                limit = 1000000, 
-                timeFrom = timeFromInSeconds
+                limit = 500000, // Large enough for high-frequency sensors over 30 days
+                timeFrom = timeFromInSeconds,
+                timeTo = currentTimeInSeconds
             )
             
             // Downsample to max ~500 points to prevent OOM and Canvas lag
