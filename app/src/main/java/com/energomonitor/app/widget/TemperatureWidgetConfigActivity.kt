@@ -151,7 +151,7 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
                                 }
                             }
                             
-                            Divider(modifier = Modifier.padding(bottom = 8.dp))
+                            HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
                             
                             // Sensor List
                             LazyColumn(

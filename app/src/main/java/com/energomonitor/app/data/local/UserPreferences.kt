@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -21,10 +19,10 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 
 @Singleton
 class UserPreferences @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     companion object {
-        val USER_ID_KEY = stringPreferencesKey("user_id") // Still needed for Energomonitor data API calls
+        val USER_ID_KEY = stringPreferencesKey("user_id")
         val USERNAME_KEY = stringPreferencesKey("username")
     }
 
@@ -37,9 +35,6 @@ class UserPreferences @Inject constructor(
     }
     val token: Flow<String?> = context.dataStore.data.map { 
         SecureStorage.getToken(context)
-    }
-    val tokenExpiresAt: Flow<String?> = context.dataStore.data.map { 
-        SecureStorage.getTokenExpiresAt(context)
     }
 
     suspend fun saveAuthData(userId: String, token: String, expiresAt: String) {
@@ -83,7 +78,7 @@ class UserPreferences @Inject constructor(
                 try {
                     val data = kotlinx.serialization.json.Json.decodeFromString<List<com.energomonitor.app.domain.model.SensorData>>(jsonString)
                     Pair(data, timestamp)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             } else {
@@ -107,7 +102,7 @@ class UserPreferences @Inject constructor(
             if (jsonString != null) {
                 try {
                     kotlinx.serialization.json.Json.decodeFromString<List<String>>(jsonString)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             } else {

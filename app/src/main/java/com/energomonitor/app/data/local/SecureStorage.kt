@@ -2,6 +2,7 @@ package com.energomonitor.app.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
@@ -33,7 +34,7 @@ object SecureStorage {
     }
 
     fun savePassword(context: Context, password: String) {
-        getEncryptedPrefs(context).edit().putString(KEY_PASSWORD, password).apply()
+        getEncryptedPrefs(context).edit { putString(KEY_PASSWORD, password) }
     }
 
     fun getPassword(context: Context): String? {
@@ -41,10 +42,10 @@ object SecureStorage {
     }
 
     fun saveToken(context: Context, token: String, expiresAt: String) {
-        getEncryptedPrefs(context).edit()
-            .putString(KEY_TOKEN, token)
-            .putString(KEY_TOKEN_EXPIRES, expiresAt)
-            .apply()
+        getEncryptedPrefs(context).edit {
+            putString(KEY_TOKEN, token)
+            putString(KEY_TOKEN_EXPIRES, expiresAt)
+        }
     }
 
     fun getToken(context: Context): String? {
@@ -56,6 +57,6 @@ object SecureStorage {
     }
 
     fun clearAll(context: Context) {
-        getEncryptedPrefs(context).edit().clear().apply()
+        getEncryptedPrefs(context).edit { clear() }
     }
 }

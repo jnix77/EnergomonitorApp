@@ -7,6 +7,7 @@
     <application
         android:name=".EnergomonitorApplication"
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="Energomonitor"
         android:roundIcon="@mipmap/ic_launcher"

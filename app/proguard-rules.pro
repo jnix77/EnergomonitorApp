@@ -38,8 +38,7 @@
 
 # Kotlinx Serialization Rules
 -keepattributes RuntimeVisibleAnnotations
--keep class kotlinx.serialization.** { *; }
--keepclassmembers class kotlinx.serialization.** { *; }
+-keep class kotlinx.serialization.internal.** { *; }
 
 # Retain serializers for generic types (List, Map, etc.)
 -keep class * implements kotlinx.serialization.KSerializer { *; }
