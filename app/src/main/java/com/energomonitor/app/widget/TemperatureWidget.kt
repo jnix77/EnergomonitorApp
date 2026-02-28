@@ -190,24 +190,14 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = displayTime,
-                style = TextStyle(
-                    color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 12.sp,
-                    textAlign = androidx.glance.text.TextAlign.Center
-                ),
-                maxLines = 1,
-            )
-            Text(
                 text = if (value != null) "${value}°C" else "--",
                 style = TextStyle(
                     color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 26.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = androidx.glance.text.TextAlign.Center
                 ),
-                maxLines = 2,
-                modifier = GlanceModifier.padding(top = 4.dp)
+                maxLines = 2
             )
         }
     } else if (isLandscape) {
