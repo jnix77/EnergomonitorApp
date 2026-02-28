@@ -61,6 +61,7 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
             MaterialTheme {
                 var sensors by remember { mutableStateOf<List<SensorData>>(emptyList()) }
                 var isLoading by remember { mutableStateOf(true) }
+                var fontSizeOffset by remember { mutableFloatStateOf(0f) }
                 val coroutineScope = rememberCoroutineScope()
 
                 LaunchedEffect(Unit) {
@@ -103,15 +104,64 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
                             Text("No temperature sensors found.")
                         }
                     } else {
-                        LazyColumn(
+                        Column(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
                         ) {
-                            items(sensors) { sensor ->
-                                SensorItem(sensor = sensor) {
-                                    coroutineScope.launch {
-                                        saveWidgetConfigurationAndFinish(sensor)
+                            // Font Size Configuration
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = "Widget Font Size Offset",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                                    ) {
+                                        Text("A", style = MaterialTheme.typography.bodySmall)
+                                        Slider(
+                                            value = fontSizeOffset,
+                                            onValueChange = { fontSizeOffset = it },
+                                            valueRange = -4f..12f,
+                                            steps = 15, // Creates 16 positions between -4 and 12
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(horizontal = 16.dp)
+                                        )
+                                        Text("A", style = MaterialTheme.typography.titleLarge)
+                                    }
+                                    val sizeDescription = when (fontSizeOffset) {
+                                        0f -> "Default Size"
+                                        in -4f..-1f -> "Smaller (${fontSizeOffset.toInt()})"
+                                        else -> "Larger (+${fontSizeOffset.toInt()})"
+                                    }
+                                    Text(
+                                        text = sizeDescription,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally)
+                                    )
+                                }
+                            }
+                            
+                            Divider(modifier = Modifier.padding(bottom = 8.dp))
+                            
+                            // Sensor List
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(sensors) { sensor ->
+                                    SensorItem(sensor = sensor) {
+                                        coroutineScope.launch {
+                                            saveWidgetConfigurationAndFinish(sensor, fontSizeOffset.toInt())
+                                        }
                                     }
                                 }
                             }
@@ -122,7 +172,7 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
         }
     }
 
-    private suspend fun saveWidgetConfigurationAndFinish(sensor: SensorData) {
+    private suspend fun saveWidgetConfigurationAndFinish(sensor: SensorData, fontSizeOffset: Int) {
         val manager = GlanceAppWidgetManager(this)
         val glanceId = manager.getGlanceIdBy(appWidgetId)
         
@@ -132,6 +182,7 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
             prefs[TemperatureWidget.titleKey] = sensor.title
             prefs[TemperatureWidget.valueKey] = sensor.currentValue
             prefs[TemperatureWidget.timestampKey] = sensor.timestamp
+            prefs[TemperatureWidget.fontSizeKey] = fontSizeOffset
         }
         
         val widget = TemperatureWidget()

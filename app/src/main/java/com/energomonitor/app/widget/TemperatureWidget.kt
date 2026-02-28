@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
@@ -72,7 +73,8 @@ class TemperatureWidget : GlanceAppWidget() {
                     val title = prefs[titleKey] ?: "Sensor"
                     val value = prefs[valueKey]
                     val timestamp = prefs[timestampKey] ?: 0L
-                    WidgetContentView(title, value, timestamp)
+                    val fontOffset = prefs[fontSizeKey] ?: 0
+                    WidgetContentView(title, value, timestamp, fontOffset)
                 }
             }
         }
@@ -121,6 +123,7 @@ class TemperatureWidget : GlanceAppWidget() {
         val titleKey = stringPreferencesKey("widget_title")
         val valueKey = doublePreferencesKey("widget_value")
         val timestampKey = longPreferencesKey("widget_timestamp")
+        val fontSizeKey = intPreferencesKey("widget_font_size_offset")
     }
 }
 
@@ -142,7 +145,7 @@ fun WidgetSetupView() {
 }
 
 @Composable
-fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
+fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset: Int) {
     val backgroundColor = when {
         value == null -> Color.DarkGray
         value < 0 -> Color(0xFF00008B) // Dark Blue
@@ -193,7 +196,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                 text = if (value != null) "${value}°C" else "--",
                 style = TextStyle(
                     color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                    fontSize = 28.sp,
+                    fontSize = (28 + (fontOffset * 2)).sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = androidx.glance.text.TextAlign.Center
                 ),
@@ -217,7 +220,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = shortTitle,
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 12.sp,
+                        fontSize = (12 + fontOffset).sp,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
                     maxLines = 3
@@ -226,7 +229,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = displayTime,
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 11.sp,
+                        fontSize = (11 + fontOffset).sp,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
                     maxLines = 1,
@@ -243,7 +246,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = if (value != null) "${value}°C" else "--",
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 24.sp,
+                        fontSize = (24 + (fontOffset * 2)).sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
@@ -269,7 +272,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = shortTitle,
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 12.sp,
+                        fontSize = (12 + fontOffset).sp,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
                     maxLines = 3
@@ -278,7 +281,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = displayTime,
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 11.sp,
+                        fontSize = (11 + fontOffset).sp,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
                     maxLines = 1,
@@ -295,7 +298,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long) {
                     text = if (value != null) "${value}°C" else "--",
                     style = TextStyle(
                         color = androidx.glance.color.ColorProvider(day = Color.White, night = Color.White),
-                        fontSize = 24.sp,
+                        fontSize = (24 + (fontOffset * 2)).sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = androidx.glance.text.TextAlign.Center
                     ),
