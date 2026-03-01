@@ -28,12 +28,14 @@ class SettingsViewModel @Inject constructor(
             val username = userPreferences.username.first() ?: ""
             val hasPassword = !userPreferences.password.first().isNullOrBlank()
             val token = userPreferences.token.first() ?: ""
+            val currentOffset = userPreferences.fontSizeOffset.first()
             
             _uiState.value = _uiState.value.copy(
                 username = username,
                 // Don't prefill password for security/UI reasons, but we check if we have one
                 hasStoredPassword = hasPassword,
-                isLoggedIn = token.isNotBlank() && hasPassword
+                isLoggedIn = token.isNotBlank() && hasPassword,
+                fontSizeOffset = currentOffset
             )
         }
     }
@@ -44,6 +46,13 @@ class SettingsViewModel @Inject constructor(
 
     fun onPasswordChanged(newValue: String) {
         _uiState.value = _uiState.value.copy(passwordInput = newValue)
+    }
+
+    fun onFontSizeChanged(offset: Int) {
+        _uiState.value = _uiState.value.copy(fontSizeOffset = offset)
+        viewModelScope.launch {
+            userPreferences.saveFontSizeOffset(offset)
+        }
     }
 
     fun saveCredentials() {
@@ -75,5 +84,6 @@ data class SettingsUiState(
     val passwordInput: String = "",
     val hasStoredPassword: Boolean = false,
     val isLoggedIn: Boolean = false,
-    val saveSuccess: Boolean = false
+    val saveSuccess: Boolean = false,
+    val fontSizeOffset: Int = 0
 )

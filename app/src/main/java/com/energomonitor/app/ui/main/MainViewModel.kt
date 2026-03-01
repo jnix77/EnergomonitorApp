@@ -57,6 +57,9 @@ class MainViewModel @Inject constructor(
                 val orderFlow = userPreferences.getSensorOrder(currentTab)
                 val savedOrder: List<String>? = orderFlow.firstOrNull()
                 
+                // Read font size offset
+                val fontSizeOffset = userPreferences.fontSizeOffset.firstOrNull() ?: 0
+                
                 // Safe extraction
                 val cachedData: List<SensorData>? = cached?.first
                 val cachedTime: Long? = cached?.second
@@ -87,7 +90,7 @@ class MainViewModel @Inject constructor(
                 if (data.isEmpty()) {
                     _uiState.value = MainUiState.Empty
                 } else {
-                    _uiState.value = MainUiState.Success(data, lastUpdate)
+                    _uiState.value = MainUiState.Success(data, lastUpdate, fontSizeOffset)
                 }
             } catch (e: Exception) {
                 _uiState.value = MainUiState.Error(e.message ?: "An unknown error occurred")
@@ -127,6 +130,6 @@ class MainViewModel @Inject constructor(
 sealed class MainUiState {
     object Loading : MainUiState()
     object Empty : MainUiState()
-    data class Success(val sensors: List<SensorData>, val lastUpdate: Long) : MainUiState()
+    data class Success(val sensors: List<SensorData>, val lastUpdate: Long, val fontSizeOffset: Int = 0) : MainUiState()
     data class Error(val message: String) : MainUiState()
 }

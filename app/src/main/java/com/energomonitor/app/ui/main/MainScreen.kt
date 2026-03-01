@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.energomonitor.app.domain.model.SensorData
 import com.energomonitor.app.domain.model.SensorTopic
@@ -147,6 +148,7 @@ fun MainScreen(
                             sensors = state.sensors, 
                             topic = selectedTab, 
                             lastUpdate = state.lastUpdate,
+                            fontSizeOffset = state.fontSizeOffset,
                             onMove = { from, to -> viewModel.reorderSensors(from, to) },
                             onDragEnd = { viewModel.saveCurrentOrder() },
                             onNavigateToTemperatureDetail = onNavigateToTemperatureDetail,
@@ -164,6 +166,7 @@ fun DashboardContent(
     sensors: List<SensorData>, 
     topic: SensorTopic, 
     lastUpdate: Long,
+    fontSizeOffset: Int,
     onMove: (Int, Int) -> Unit,
     onDragEnd: () -> Unit,
     onNavigateToTemperatureDetail: (String, String, String) -> Unit,
@@ -183,8 +186,8 @@ fun DashboardContent(
     LazyColumn(
         state = state.listState,
         modifier = Modifier.reorderable(state),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        contentPadding = PaddingValues((16 + (fontSizeOffset / 2.0f).toInt()).coerceAtLeast(4).dp),
+        verticalArrangement = Arrangement.spacedBy((16 + fontSizeOffset).coerceAtLeast(4).dp)
     ) {
         item {
             Text(
@@ -212,6 +215,7 @@ fun DashboardContent(
                     isDragging = isDragging,
                     timeText = timeText,
                     isOutdated = isOutdated,
+                    fontSizeOffset = fontSizeOffset,
                     onClick = {
                         if (topic == SensorTopic.TEMPERATURE) {
                             onNavigateToTemperatureDetail(sensor.feedId, sensor.id, sensor.title)
@@ -234,6 +238,7 @@ fun SensorCard(
     isDragging: Boolean = false,
     timeText: String,
     isOutdated: Boolean,
+    fontSizeOffset: Int = 0,
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -263,7 +268,7 @@ fun SensorCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(110.dp),
+            .wrapContentHeight(),
         shape = RoundedCornerShape(24.dp), // Premium smooth corner
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDragging) 16.dp else 4.dp)
     ) {
@@ -271,7 +276,7 @@ fun SensorCard(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Brush.linearGradient(colors = gradientColors))
-                .padding(16.dp)
+                .padding((16 + (fontSizeOffset / 2.0f).toInt()).coerceAtLeast(8).dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -288,7 +293,7 @@ fun SensorCard(
                 // Sensor Context Icon
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size((48 + (fontSizeOffset * 1.5f).toInt()).dp)
                         .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
@@ -296,7 +301,7 @@ fun SensorCard(
                         imageVector = topic.icon,
                         contentDescription = "Sensor Type",
                         tint = Color.White,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size((28 + fontSizeOffset).dp)
                     )
                 }
 
@@ -307,6 +312,8 @@ fun SensorCard(
                         text = sensor.title,
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
+                        fontSize = (16 + fontSizeOffset).sp,
+                        lineHeight = (20 + fontSizeOffset).sp,
                         fontWeight = FontWeight.Medium
                     )
                     
@@ -314,7 +321,9 @@ fun SensorCard(
                         text = timeText,
                         color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 2.dp)
+                        fontSize = (14 + (fontSizeOffset / 2.0f).toInt()).sp,
+                        lineHeight = (18 + (fontSizeOffset / 2.0f).toInt()).sp,
+                        modifier = Modifier.padding(top = (2 + (fontSizeOffset / 4.0f).toInt()).coerceAtLeast(0).dp)
                     )
                 }
                 
@@ -325,6 +334,8 @@ fun SensorCard(
                         text = sensor.currentValue.toString(),
                         color = Color.White,
                         style = MaterialTheme.typography.headlineLarge,
+                        fontSize = (32 + (fontSizeOffset * 2)).sp,
+                        lineHeight = (36 + (fontSizeOffset * 2)).sp,
                         fontWeight = FontWeight.Black
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -332,7 +343,8 @@ fun SensorCard(
                         text = sensor.unit,
                         color = Color.White.copy(alpha = 0.7f),
                         style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        fontSize = (16 + fontSizeOffset).sp,
+                        modifier = Modifier.padding(bottom = (6 + (fontSizeOffset / 2.0f).toInt()).coerceAtLeast(0).dp)
                     )
                 }
             }

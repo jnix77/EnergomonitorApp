@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -24,10 +25,16 @@ class UserPreferences @Inject constructor(
     companion object {
         val USER_ID_KEY = stringPreferencesKey("user_id")
         val USERNAME_KEY = stringPreferencesKey("username")
+        val FONT_SIZE_OFFSET_KEY = intPreferencesKey("font_size_offset")
     }
 
     val userId: Flow<String?> = context.dataStore.data.map { it[USER_ID_KEY] }
     val username: Flow<String?> = context.dataStore.data.map { it[USERNAME_KEY] }
+    
+    // Add font size offset defaulting to 0
+    val fontSizeOffset: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[FONT_SIZE_OFFSET_KEY] ?: 0
+    }
 
     // Password and token are now stored in EncryptedSharedPreferences via SecureStorage
     val password: Flow<String?> = context.dataStore.data.map { 
@@ -50,6 +57,12 @@ class UserPreferences @Inject constructor(
         }
         if (passwordRaw.isNotBlank()) {
             SecureStorage.savePassword(context, passwordRaw)
+        }
+    }
+
+    suspend fun saveFontSizeOffset(offset: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[FONT_SIZE_OFFSET_KEY] = offset
         }
     }
 

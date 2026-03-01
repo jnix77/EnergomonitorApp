@@ -117,7 +117,7 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
                                     Text(
-                                        text = "Widget Font Size Offset",
+                                        text = "Widget Font Size",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -129,17 +129,17 @@ class TemperatureWidgetConfigActivity : ComponentActivity() {
                                         Slider(
                                             value = fontSizeOffset,
                                             onValueChange = { fontSizeOffset = it },
-                                            valueRange = -4f..12f,
-                                            steps = 15, // Creates 16 positions between -4 and 12
+                                            valueRange = -3f..3f,
+                                            steps = 5, // Creates 7 positions between -3 and 3
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .padding(horizontal = 16.dp)
                                         )
                                         Text("A", style = MaterialTheme.typography.titleLarge)
                                     }
-                                    val sizeDescription = when (fontSizeOffset) {
-                                        0f -> "Default Size"
-                                        in -4f..-1f -> "Smaller (${fontSizeOffset.toInt()})"
+                                    val sizeDescription = when {
+                                        fontSizeOffset == 0f -> "Default Size"
+                                        fontSizeOffset < 0f -> "Smaller (${fontSizeOffset.toInt()})"
                                         else -> "Larger (+${fontSizeOffset.toInt()})"
                                     }
                                     Text(

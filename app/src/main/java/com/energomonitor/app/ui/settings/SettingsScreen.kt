@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.style.TextDecoration
 import com.energomonitor.app.BuildConfig
@@ -94,6 +95,42 @@ fun SettingsScreen(
             }
             
             Spacer(modifier = Modifier.height(48.dp))
+            
+            // Font Size Slider
+            Text(
+                text = "Sensor Font Size",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+            )
+
+            Row(
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Text("A", style = MaterialTheme.typography.bodySmall)
+                Slider(
+                    value = uiState.fontSizeOffset.toFloat(),
+                    onValueChange = { viewModel.onFontSizeChanged(it.toInt()) },
+                    valueRange = -3f..3f,
+                    steps = 5, // Creates 7 positions: -3, -2, -1, 0, 1, 2, 3
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                )
+                Text("A", style = MaterialTheme.typography.titleLarge)
+            }
+            val sizeDescription = when (uiState.fontSizeOffset) {
+                0 -> "Default Size"
+                in -3..-1 -> "Smaller (${uiState.fontSizeOffset})"
+                else -> "Larger (+${uiState.fontSizeOffset})"
+            }
+            Text(
+                text = sizeDescription,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
             
             HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             
