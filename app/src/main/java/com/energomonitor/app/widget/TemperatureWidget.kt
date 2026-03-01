@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -15,8 +14,6 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.LocalContext
-import androidx.glance.action.ActionParameters
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionStartActivity
@@ -31,14 +28,12 @@ import androidx.glance.layout.padding
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import com.energomonitor.app.MainActivity
 import com.energomonitor.app.data.repository.SensorDataRepository
 import com.energomonitor.app.domain.model.SensorTopic
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -58,9 +53,6 @@ class TemperatureWidget : GlanceAppWidget() {
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val entryPoint = EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java)
-        // val repository = entryPoint.sensorDataRepository() // No longer used in provideGlance
-        
         provideContent {
             GlanceTheme {
                 val prefs = currentState<Preferences>()
@@ -162,13 +154,6 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset
         value > 20.0 && value <= 30.0 -> Color(0xFFFF8C00) // Dark Orange
         else -> Color(0xFF8B0000) // Dark Red
     }
-    
-    val timeString = if (timestamp > 0) {
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        sdf.format(Date(timestamp * 1000L)) // API timestamps are in seconds usually, need to check DB
-    } else {
-        "--:--"
-    }
 
     // Checking if the original timestamp was in ms or sec. Our repository:
     // val timestamp = (dataPoints.first()[0] as Number).toLong() (which is in ms usually for Energomonitor)
@@ -183,10 +168,8 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset
     // Many 1x1 widgets on 5-column grids evaluate slightly larger than 100.dp (often 110-115.dp)
     val isSmall = size.width <= 120.dp && size.height <= 120.dp
 
-    val shortTitle = if (title.contains(" ") && title.length > 10) {
-        title.substringAfter(" ")
-    } else if (title.length > 15) {
-        ".." + title.takeLast(13)
+    val shortTitle = if (title.length > 20) {
+        ".." + title.takeLast(18)
     } else {
         title
     }
