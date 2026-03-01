@@ -133,7 +133,7 @@ fun WidgetSetupView() {
         modifier = GlanceModifier.fillMaxSize()
             .background(Color.DarkGray)
             .padding(8.dp)
-            .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity"))),
+            .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))),
         verticalAlignment = Alignment.CenterVertically,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -185,7 +185,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset
             modifier = GlanceModifier.fillMaxSize()
                 .background(backgroundColor)
                 .padding(4.dp)
-                .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity"))),
+                .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))),
             verticalAlignment = Alignment.CenterVertically,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -204,7 +204,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset
         Row(
             modifier = GlanceModifier.fillMaxSize()
                 .background(backgroundColor)
-                .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity"))),
+                .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Left Half
@@ -257,7 +257,7 @@ fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset
         Column(
             modifier = GlanceModifier.fillMaxSize()
                 .background(backgroundColor)
-                .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity"))),
+                .clickable(actionStartActivity(Intent().setClassName("com.energomonitor.app", "com.energomonitor.app.MainActivity").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP))),
         ) {
             // Upper half: Title and Time
             Column(
