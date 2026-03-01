@@ -13,7 +13,7 @@ android {
     defaultConfig {
         applicationId = "com.energomonitor.app"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 10
         versionName = "0.10"
     }
@@ -77,10 +77,10 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.11.1")
 
     // Retrofit & Networking
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
+    implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0")
 
     // Coroutines
