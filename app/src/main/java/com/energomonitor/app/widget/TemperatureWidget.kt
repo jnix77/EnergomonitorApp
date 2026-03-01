@@ -146,22 +146,28 @@ fun WidgetSetupView() {
 
 @Composable
 fun WidgetContentView(title: String, value: Double?, timestamp: Long, fontOffset: Int) {
+    val displayTime = if (timestamp > 0) {
+        val isMs = timestamp > 1000000000000L
+        val date = if (isMs) Date(timestamp) else Date(timestamp * 1000)
+        SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
+    } else "--:--"
+
+    // Check if the timestamp is older than 2 hours from now
+    val isOutdated = if (timestamp > 0) {
+        val isMs = timestamp > 1000000000000L
+        val timestampMs = if (isMs) timestamp else timestamp * 1000
+        val twoHoursInMillis = 2 * 60 * 60 * 1000L
+        (System.currentTimeMillis() - timestampMs) > twoHoursInMillis
+    } else false
+
     val backgroundColor = when {
-        value == null -> Color.DarkGray
+        value == null || isOutdated -> Color.DarkGray
         value < 0 -> Color(0xFF00008B) // Dark Blue
         value in 0.0..10.0 -> Color(0xFF006400) // Dark Green
         value > 10.0 && value <= 20.0 -> Color(0xFFB8860B) // Dark Yellow
         value > 20.0 && value <= 30.0 -> Color(0xFFFF8C00) // Dark Orange
         else -> Color(0xFF8B0000) // Dark Red
     }
-
-    // Checking if the original timestamp was in ms or sec. Our repository:
-    // val timestamp = (dataPoints.first()[0] as Number).toLong() (which is in ms usually for Energomonitor)
-    val displayTime = if (timestamp > 0) {
-        val isMs = timestamp > 1000000000000L
-        val date = if (isMs) Date(timestamp) else Date(timestamp * 1000)
-        SimpleDateFormat("HH:mm", Locale.getDefault()).format(date)
-    } else "--:--"
 
     val size = LocalSize.current
     val isLandscape = size.width > size.height
